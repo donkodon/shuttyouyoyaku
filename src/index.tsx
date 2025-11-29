@@ -24,7 +24,7 @@ async function initializeDatabase(db: D1Database) {
         customer_name TEXT NOT NULL,
         customer_email TEXT NOT NULL,
         customer_phone TEXT NOT NULL,
-        customer_postal_code TEXT NOT NULL,
+        customer_postal_code TEXT,
         customer_address TEXT NOT NULL,
         reservation_date TEXT NOT NULL,
         reservation_time TEXT NOT NULL,
