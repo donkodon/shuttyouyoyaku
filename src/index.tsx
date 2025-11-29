@@ -243,10 +243,61 @@ app.post('/api/reservations', async (c) => {
       customer_notes || null, has_parking, has_elevator
     ).run();
     
+    const reservationId = result.meta.last_row_id;
+    
+    // メール送信（ログ出力）
+    const timeSlotLabels = {
+      '10:00': '10:00〜12:00',
+      '12:00': '12:00〜14:00',
+      '14:00': '14:00〜16:00',
+      '16:00': '16:00〜18:00'
+    };
+    
+    console.log('=== 予約確認メール送信 ===');
+    console.log(`宛先: ${customer_email}`);
+    console.log(`件名: 【出張買取予約システム】ご予約を承りました（予約ID: #${reservationId}）`);
+    console.log(`本文:`);
+    console.log(`
+${customer_name} 様
+
+この度は、出張買取予約システムをご利用いただき、誠にありがとうございます。
+以下の内容でご予約を承りました。
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+■ ご予約内容
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+予約ID: #${reservationId}
+予約日時: ${reservation_date} ${timeSlotLabels[reservation_time] || reservation_time}
+
+■ お客様情報
+お名前: ${customer_name}
+電話番号: ${customer_phone}
+メールアドレス: ${customer_email}
+${customer_postal_code ? `郵便番号: 〒${customer_postal_code}\n` : ''}訪問先住所: ${customer_address}
+
+■ 買取情報
+買取品目: ${item_category}
+品目の詳細: ${item_description}
+概算点数: ${estimated_quantity}点
+駐車場: ${has_parking}
+エレベーター: ${has_elevator}
+${customer_notes ? `\nご要望・備考:\n${customer_notes}` : ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+担当者より改めてご連絡させていただきます。
+ご不明な点がございましたら、お気軽にお問い合わせください。
+
+今後ともよろしくお願いいたします。
+
+出張買取予約システム
+    `);
+    console.log('========================');
+    
     return c.json({
       success: true,
       data: {
-        id: result.meta.last_row_id,
+        id: reservationId,
         ...body
       }
     }, 201);
@@ -894,6 +945,38 @@ app.get('/', (c) => {
                     </div>
                 </div>
             </div>
+
+            <!-- 予約完了セクション -->
+            <div id="confirmation-section" class="section hidden">
+                <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-8">
+                    <div class="text-center mb-6">
+                        <div class="inline-block p-4 bg-green-100 rounded-full mb-4">
+                            <i class="fas fa-check-circle text-6xl text-green-600"></i>
+                        </div>
+                        <h2 class="text-3xl font-bold text-gray-800 mb-2">予約が完了しました</h2>
+                        <p class="text-gray-600">ご予約ありがとうございます。確認メールを送信いたしました。</p>
+                    </div>
+                    
+                    <div class="border-t border-gray-200 pt-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">
+                            <i class="fas fa-clipboard-list mr-2 text-blue-600"></i>
+                            ご予約内容
+                        </h3>
+                        
+                        <div id="confirmation-details" class="space-y-4">
+                            <!-- 予約詳細がここに表示されます -->
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 flex justify-center">
+                        <button onclick="showSection('calendar')" 
+                            class="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-lg">
+                            <i class="fas fa-calendar mr-2"></i>
+                            カレンダーに戻る
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
@@ -943,7 +1026,8 @@ app.get('/', (c) => {
                     const response = await axios.post('/api/reservations', data);
                     
                     if (response.data.success) {
-                        alert('予約を受け付けました！\\n予約ID: ' + response.data.data.id);
+                        // 完了画面を表示
+                        showConfirmation(response.data.data);
                         e.target.reset();
                         // 日付と時間のフィールドをクリア
                         document.getElementById('reservation-date').value = '';
@@ -955,6 +1039,99 @@ app.get('/', (c) => {
                     timeField.setAttribute('disabled', 'true');
                 }
             });
+
+            // 予約完了画面を表示
+            function showConfirmation(reservationData) {
+                const details = document.getElementById('confirmation-details');
+                const timeSlotLabels = {
+                    '10:00': '10:00〜12:00',
+                    '12:00': '12:00〜14:00',
+                    '14:00': '14:00〜16:00',
+                    '16:00': '16:00〜18:00'
+                };
+                
+                details.innerHTML = \`
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-gray-700 mb-3 text-lg">
+                            <i class="fas fa-calendar-check mr-2 text-blue-600"></i>
+                            予約日時
+                        </h4>
+                        <p class="text-2xl font-bold text-blue-700">
+                            \${reservationData.reservation_date} \${timeSlotLabels[reservationData.reservation_time] || reservationData.reservation_time}
+                        </p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600 mb-1">お名前</p>
+                            <p class="font-semibold text-gray-800">\${reservationData.customer_name}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600 mb-1">電話番号</p>
+                            <p class="font-semibold text-gray-800">\${reservationData.customer_phone}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600 mb-1">メールアドレス</p>
+                            <p class="font-semibold text-gray-800">\${reservationData.customer_email}</p>
+                        </div>
+                        \${reservationData.customer_postal_code ? \`
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm text-gray-600 mb-1">郵便番号</p>
+                                <p class="font-semibold text-gray-800">〒\${reservationData.customer_postal_code}</p>
+                            </div>
+                        \` : ''}
+                    </div>
+                    
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600 mb-2">
+                            <i class="fas fa-map-marker-alt mr-1 text-green-600"></i>
+                            訪問先住所
+                        </p>
+                        <p class="font-semibold text-gray-800 text-lg">\${reservationData.customer_address}</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600 mb-1">買取品目</p>
+                            <p class="font-semibold text-gray-800">\${reservationData.item_category}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600 mb-1">概算点数</p>
+                            <p class="font-semibold text-gray-800">\${reservationData.estimated_quantity}点</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600 mb-1">駐車場</p>
+                            <p class="font-semibold text-gray-800">\${reservationData.has_parking}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600 mb-1">エレベーター</p>
+                            <p class="font-semibold text-gray-800">\${reservationData.has_elevator}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600 mb-2">品目の詳細</p>
+                        <p class="font-semibold text-gray-800">\${reservationData.item_description}</p>
+                    </div>
+                    
+                    \${reservationData.customer_notes ? \`
+                        <div class="bg-yellow-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600 mb-2">
+                                <i class="fas fa-comment mr-1 text-yellow-600"></i>
+                                ご要望・備考
+                            </p>
+                            <p class="font-semibold text-gray-800">\${reservationData.customer_notes}</p>
+                        </div>
+                    \` : ''}
+                    
+                    <div class="bg-blue-50 p-4 rounded-lg text-center">
+                        <p class="text-sm text-gray-600">予約ID</p>
+                        <p class="text-2xl font-bold text-blue-700">#\${reservationData.id}</p>
+                    </div>
+                \`;
+                
+                showSection('confirmation');
+            }
 
             // 予約一覧読み込み
             async function loadReservations() {
