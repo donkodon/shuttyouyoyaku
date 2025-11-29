@@ -308,6 +308,10 @@ export const adminHTML = `
 
         // カレンダー描画
         function renderCalendar() {
+            console.log('=== renderCalendar 開始 ===');
+            console.log('calendarData:', calendarData);
+            console.log('unavailableDates:', calendarData.unavailableDates);
+            
             const grid = document.getElementById('calendar-grid');
             const firstDay = new Date(currentYear, currentMonth - 1, 1).getDay();
             const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
@@ -327,6 +331,8 @@ export const adminHTML = `
                 unavailableMap[d.date] = d.reason;
             });
             
+            console.log('unavailableMap:', unavailableMap);
+            
             const weekDays = ['日', '月', '火', '水', '木', '金', '土'];
             let html = weekDays.map(day => 
                 \`<div class="text-center font-bold p-2 bg-gray-100">\${day}</div>\`
@@ -338,10 +344,14 @@ export const adminHTML = `
             
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = \`\${currentYear}-\${String(currentMonth).padStart(2, '0')}-\${String(day).padStart(2, '0')}\`;
-                const isUnavailable = unavailableMap[date];
+                const isUnavailable = date in unavailableMap;  // 🔥 空文字列でもtrueになる
                 const isToday = date === today;
                 const isPast = new Date(date) < new Date(today);
                 const isSelected = selectedDates.has(date);
+                
+                if (day <= 10) {
+                    console.log(\`\${date}: isUnavailable=\${isUnavailable}, in map=\${date in unavailableMap}\`);
+                }
                 
                 let cellClass = 'calendar-cell';
                 if (isUnavailable) cellClass += ' unavailable-day';
