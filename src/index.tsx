@@ -947,7 +947,7 @@ app.get('/', (c) => {
                 for (let day = 1; day <= daysInMonth; day++) {
                     const date = \`\${currentYear}-\${String(currentMonth).padStart(2, '0')}-\${String(day).padStart(2, '0')}\`;
                     const count = reservationMap[date] || 0;
-                    const isUnavailable = unavailableMap[date];
+                    const isUnavailable = date in unavailableMap;  // 🔥 空文字列でもtrueになる
                     const isPast = new Date(date) < new Date(today);
                     
                     let cellClass = 'calendar-day p-2';
