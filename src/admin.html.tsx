@@ -248,8 +248,10 @@ export const adminHTML = `
         const timeSlots = ['10:00', '12:00', '14:00', '16:00'];
         const slotLabels = ['午前1', '午前2', '午後1', '午後2'];
 
-        // ログイン処理
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
+        // DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // ログイン処理
+            document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const formData = new FormData(e.target);
@@ -770,8 +772,9 @@ export const adminHTML = `
             return labels[status] || status;
         }
 
-        // ステータスフィルター
-        document.getElementById('status-filter')?.addEventListener('change', loadReservations);
+            // ステータスフィルター
+            document.getElementById('status-filter')?.addEventListener('change', loadReservations);
+        }); // DOMContentLoaded終了
     </script>
 </body>
 </html>
