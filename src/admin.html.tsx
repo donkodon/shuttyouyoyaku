@@ -40,8 +40,11 @@ export const adminHTML = `
             padding: 8px;
         }
         .calendar-cell.unavailable-day {
-            background-color: #e5e7eb;
-            opacity: 0.6;
+            background-color: #d1d5db !important;
+            opacity: 1;
+        }
+        .calendar-cell.unavailable-day * {
+            opacity: 0.7;
         }
         .calendar-cell.today {
             border: 2px solid #3b82f6;
