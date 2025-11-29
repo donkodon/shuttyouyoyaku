@@ -477,10 +477,12 @@ export const adminHTML = `
                             <div class="text-sm text-gray-600 space-y-1 mt-2">
                                 <p><i class="fas fa-phone mr-2 text-blue-500"></i>\${r.customer_phone}</p>
                                 <p><i class="fas fa-envelope mr-2 text-blue-500"></i>\${r.customer_email}</p>
-                                <p><i class="fas fa-map-pin mr-2 text-blue-500"></i>〒\${r.customer_postal_code}</p>
+                                \${r.customer_postal_code ? \`<p><i class="fas fa-map-pin mr-2 text-blue-500"></i>〒\${r.customer_postal_code}</p>\` : ''}
                                 <p><i class="fas fa-map-marker-alt mr-2 text-blue-500"></i>\${r.customer_address}</p>
                                 <p><i class="fas fa-box mr-2 text-blue-500"></i>\${r.item_category}</p>
                                 \${r.estimated_quantity ? \`<p><i class="fas fa-hashtag mr-2 text-blue-500"></i>概算点数: \${r.estimated_quantity}点</p>\` : ''}
+                                \${r.has_parking ? \`<p><i class="fas fa-parking mr-2 text-blue-500"></i>駐車場: \${r.has_parking}</p>\` : ''}
+                                \${r.has_elevator ? \`<p><i class="fas fa-elevator mr-2 text-blue-500"></i>エレベーター: \${r.has_elevator}</p>\` : ''}
                             </div>
                             \${r.item_description ? \`
                                 <div class="mt-2 p-2 bg-gray-50 rounded">

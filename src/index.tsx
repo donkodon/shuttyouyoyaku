@@ -61,6 +61,18 @@ async function initializeDatabase(db: D1Database) {
     db.prepare('CREATE INDEX IF NOT EXISTS idx_unavailable_dates ON unavailable_dates(date)'),
     db.prepare("INSERT OR IGNORE INTO admins (username, password_hash) VALUES ('admin', 'admin123')")
   ]);
+  
+  // Add new columns if they don't exist (for existing databases)
+  try {
+    await db.prepare('ALTER TABLE reservations ADD COLUMN has_parking TEXT').run();
+  } catch (e) {
+    // Column already exists
+  }
+  try {
+    await db.prepare('ALTER TABLE reservations ADD COLUMN has_elevator TEXT').run();
+  } catch (e) {
+    // Column already exists
+  }
 }
 
 // エリアチェック関数（都内・横浜市）
@@ -174,13 +186,17 @@ app.post('/api/reservations', async (c) => {
       item_category,
       item_description,
       estimated_quantity,
-      customer_notes
+      customer_notes,
+      has_parking,
+      has_elevator
     } = body;
     
     // バリデーション（郵便番号は任意）
     if (!customer_name || !customer_email || !customer_phone || 
         !customer_address ||
-        !reservation_date || !reservation_time || !item_category) {
+        !reservation_date || !reservation_time || !item_category ||
+        !item_description || !estimated_quantity ||
+        !has_parking || !has_elevator) {
       return c.json({
         success: false,
         error: '必須項目が入力されていません'
@@ -241,14 +257,14 @@ app.post('/api/reservations', async (c) => {
         customer_postal_code, customer_address,
         reservation_date, reservation_time,
         item_category, item_description, estimated_quantity,
-        customer_notes, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+        customer_notes, has_parking, has_elevator, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
     `).bind(
       customer_name, customer_email, customer_phone,
-      customer_postal_code, customer_address,
+      customer_postal_code || null, customer_address,
       reservation_date, reservation_time,
-      item_category, item_description || null, estimated_quantity || null,
-      customer_notes || null
+      item_category, item_description, estimated_quantity,
+      customer_notes || null, has_parking, has_elevator
     ).run();
     
     return c.json({
@@ -657,7 +673,7 @@ app.get('/', (c) => {
                                 ご住所 <span class="text-red-500">*</span>
                             </label>
                             <input type="text" name="customer_address" required
-                                placeholder="東京都千代田区千代田1-1-1"
+                                placeholder="東京都千代田区千代田1-1-1 千代田マンション101号室"
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         </div>
                         
@@ -766,6 +782,16 @@ app.get('/', (c) => {
                                     <span class="text-sm">貴金属</span>
                                 </label>
                                 <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="item_category" value="食器"
+                                        class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                                    <span class="text-sm">食器</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="item_category" value="雑貨"
+                                        class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                                    <span class="text-sm">雑貨</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
                                     <input type="checkbox" name="item_category" value="その他"
                                         class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
                                     <span class="text-sm">その他</span>
@@ -775,27 +801,66 @@ app.get('/', (c) => {
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">
-                                概算点数
+                                概算点数 <span class="text-red-500">*</span>
                             </label>
-                            <input type="number" name="estimated_quantity" min="1"
+                            <input type="number" name="estimated_quantity" min="1" required
+                                placeholder="例：5"
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">
-                                品目の詳細
+                                品目の詳細 <span class="text-red-500">*</span>
                             </label>
-                            <textarea name="item_description" rows="3"
-                                placeholder="例：テレビ（40型）、冷蔵庫、洗濯機など"
+                            <textarea name="item_description" rows="3" required
+                                placeholder="例：テレビ1点、食器10点、ブランド品2点、本1箱など"
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
                         </div>
                         
                         <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                建物情報 <span class="text-red-500">*</span>
+                            </label>
+                            <div class="grid grid-cols-2 gap-4 p-4 border border-gray-300 rounded-lg bg-gray-50">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">駐車場</label>
+                                    <div class="flex space-x-4">
+                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                            <input type="radio" name="has_parking" value="あり" required
+                                                class="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500">
+                                            <span class="text-sm">あり</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                            <input type="radio" name="has_parking" value="なし" required
+                                                class="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500">
+                                            <span class="text-sm">なし</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">エレベーター</label>
+                                    <div class="flex space-x-4">
+                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                            <input type="radio" name="has_elevator" value="あり" required
+                                                class="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500">
+                                            <span class="text-sm">あり</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                            <input type="radio" name="has_elevator" value="なし" required
+                                                class="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500">
+                                            <span class="text-sm">なし</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">
-                                ご要望・備考
+                                その他ご要望・備考
                             </label>
                             <textarea name="customer_notes" rows="3"
-                                placeholder="駐車場の有無、搬出経路、その他ご要望など"
+                                placeholder="搬出経路、その他ご要望など"
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
                         </div>
                         
