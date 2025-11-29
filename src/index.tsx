@@ -1030,6 +1030,9 @@ app.get('/', (c) => {
                 document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
                 document.getElementById(section + '-section').classList.remove('hidden');
                 
+                // ページトップへスクロール
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                
                 if (section === 'list') {
                     loadReservations();
                 } else if (section === 'calendar') {
@@ -1172,6 +1175,8 @@ app.get('/', (c) => {
                 \`;
                 
                 showSection('confirmation');
+                // ページトップへスクロール（確実に一番上から表示）
+                setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 100);
             }
 
             // 予約一覧読み込み
@@ -1360,9 +1365,6 @@ app.get('/', (c) => {
                 // 再度読み取り専用に
                 dateField.setAttribute('readonly', 'true');
                 timeField.setAttribute('disabled', 'true');
-                
-                // フォームまでスクロール
-                document.getElementById('booking-form').scrollIntoView({ behavior: 'smooth' });
             }
 
             // 月変更
