@@ -596,7 +596,7 @@ app.get('/', (c) => {
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
         <style>
             .calendar-day {
-                min-height: 100px;
+                min-height: 140px;
                 border: 1px solid #e5e7eb;
             }
             .calendar-day:hover {
@@ -604,6 +604,11 @@ app.get('/', (c) => {
             }
             .has-reservation {
                 background-color: #fef3c7;
+            }
+            @media (min-width: 768px) {
+                .calendar-day {
+                    min-height: 100px;
+                }
             }
         </style>
     </head>
@@ -1313,7 +1318,7 @@ app.get('/', (c) => {
                             \` : isPast ? \`
                                 <div class="text-xs text-gray-600">過去</div>
                             \` : \`
-                                <div class="grid grid-cols-2 gap-1">
+                                <div class="flex flex-col gap-1">
                                     \${timeSlots.map((time, idx) => {
                                         const count = reservationMap[date]?.[time] || 0;
                                         const isBooked = count > 0;
@@ -1329,7 +1334,7 @@ app.get('/', (c) => {
                                         const slotClass = isDisabled ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-green-500 text-white hover:bg-green-600 cursor-pointer';
                                         
                                         return \`
-                                            <button class="text-xs py-1 px-1 rounded \${slotClass}" 
+                                            <button class="text-sm py-2 px-2 rounded font-medium \${slotClass}" 
                                                 onclick="\${isDisabled ? '' : \`selectTimeSlot('\${date}', '\${time}')\`}"
                                                 \${isDisabled ? 'disabled' : ''}
                                                 title="\${isTooLate && !isBooked ? '予約締切（4時間前）' : isBooked ? '予約済み' : '予約可能'}">
