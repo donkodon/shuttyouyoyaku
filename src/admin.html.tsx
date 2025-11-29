@@ -545,7 +545,7 @@ export const adminHTML = `
         }
 
         // 一括選択モードのキャンセル
-        function cancelBulkSelectMode() {
+        function cancelBulkSelectMode(skipRender = false) {
             bulkSelectMode = false;
             selectedDates.clear();
             
@@ -554,7 +554,9 @@ export const adminHTML = `
             document.getElementById('bulk-open-btn').classList.add('hidden');
             document.getElementById('bulk-cancel-btn').classList.add('hidden');
             
-            renderCalendar();
+            if (!skipRender) {
+                renderCalendar();
+            }
         }
 
         // 日付選択の切り替え
@@ -599,12 +601,18 @@ export const adminHTML = `
                 await Promise.all(promises);
                 console.log('全ての日付のクローズが完了');
                 
-                // データを再取得してからモードを解除
+                // モード状態を先に解除（UIボタンの切り替え）
+                bulkSelectMode = false;
+                selectedDates.clear();
+                document.getElementById('bulk-select-btn').classList.remove('hidden');
+                document.getElementById('bulk-close-btn').classList.add('hidden');
+                document.getElementById('bulk-open-btn').classList.add('hidden');
+                document.getElementById('bulk-cancel-btn').classList.add('hidden');
+                console.log('一括選択モードを解除');
+                
+                // データを再取得して再描画
                 await loadCalendar();
                 console.log('カレンダーデータを再取得完了');
-                
-                cancelBulkSelectMode();
-                console.log('一括選択モードを解除');
                 
                 alert(\`\${dates.length}日分を出張不可日に設定しました\`);
             } catch (error) {
@@ -643,12 +651,18 @@ export const adminHTML = `
                 await Promise.all(promises);
                 console.log('全ての日付のオープンが完了');
                 
-                // データを再取得してからモードを解除
+                // モード状態を先に解除（UIボタンの切り替え）
+                bulkSelectMode = false;
+                selectedDates.clear();
+                document.getElementById('bulk-select-btn').classList.remove('hidden');
+                document.getElementById('bulk-close-btn').classList.add('hidden');
+                document.getElementById('bulk-open-btn').classList.add('hidden');
+                document.getElementById('bulk-cancel-btn').classList.add('hidden');
+                console.log('一括選択モードを解除');
+                
+                // データを再取得して再描画
                 await loadCalendar();
                 console.log('カレンダーデータを再取得完了');
-                
-                cancelBulkSelectMode();
-                console.log('一括選択モードを解除');
                 
                 alert(\`\${dates.length}日分を出張可能日に設定しました\`);
             } catch (error) {
