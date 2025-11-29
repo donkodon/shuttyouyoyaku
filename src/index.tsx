@@ -177,9 +177,9 @@ app.post('/api/reservations', async (c) => {
       customer_notes
     } = body;
     
-    // バリデーション
+    // バリデーション（郵便番号は任意）
     if (!customer_name || !customer_email || !customer_phone || 
-        !customer_postal_code || !customer_address ||
+        !customer_address ||
         !reservation_date || !reservation_time || !item_category) {
       return c.json({
         success: false,
@@ -188,7 +188,7 @@ app.post('/api/reservations', async (c) => {
     }
     
     // エリアチェック
-    if (!isValidArea(customer_postal_code, customer_address)) {
+    if (!isValidArea(customer_postal_code || '', customer_address)) {
       return c.json({
         success: false,
         error: '申し訳ございません。ご指定のエリアは出張対応エリア外です。（対応エリア：東京都内、横浜市）'
@@ -644,9 +644,9 @@ app.get('/', (c) => {
                             
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    郵便番号 <span class="text-red-500">*</span>
+                                    郵便番号
                                 </label>
-                                <input type="text" name="customer_postal_code" required
+                                <input type="text" name="customer_postal_code"
                                     placeholder="100-0001"
                                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                             </div>
@@ -666,47 +666,69 @@ app.get('/', (c) => {
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     希望日 <span class="text-red-500">*</span>
                                 </label>
-                                <input type="date" name="reservation_date" required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <input type="date" id="reservation-date" name="reservation_date" required readonly
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed">
                             </div>
                             
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     希望時間帯 <span class="text-red-500">*</span>
                                 </label>
-                                <select name="reservation_time" required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <select id="reservation-time" name="reservation_time" required disabled
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed">
                                     <option value="">選択してください</option>
                                     <option value="10:00">10:00〜12:00</option>
+                                    <option value="12:00">12:00〜14:00</option>
                                     <option value="14:00">14:00〜16:00</option>
                                     <option value="16:00">16:00〜18:00</option>
                                 </select>
                             </div>
                         </div>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    買取品目 <span class="text-red-500">*</span>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                買取品目 <span class="text-red-500">*</span>（複数選択可）
+                            </label>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 border border-gray-300 rounded-lg bg-gray-50">
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="item_category" value="家電" 
+                                        class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                                    <span class="text-sm">家電</span>
                                 </label>
-                                <select name="item_category" required
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                    <option value="">選択してください</option>
-                                    <option value="家電">家電</option>
-                                    <option value="家具">家具</option>
-                                    <option value="衣類">衣類</option>
-                                    <option value="ブランド品">ブランド品</option>
-                                    <option value="その他">その他</option>
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    概算点数
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="item_category" value="家具"
+                                        class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                                    <span class="text-sm">家具</span>
                                 </label>
-                                <input type="number" name="estimated_quantity" min="1"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="item_category" value="衣類"
+                                        class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                                    <span class="text-sm">衣類</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="item_category" value="ブランド品"
+                                        class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                                    <span class="text-sm">ブランド品</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="item_category" value="楽器"
+                                        class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                                    <span class="text-sm">楽器</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="item_category" value="その他"
+                                        class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                                    <span class="text-sm">その他</span>
+                                </label>
                             </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                概算点数
+                            </label>
+                            <input type="number" name="estimated_quantity" min="1"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         </div>
                         
                         <div>
@@ -837,8 +859,27 @@ app.get('/', (c) => {
             document.getElementById('booking-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 
+                // チェックボックスの買取品目を取得
+                const checkedCategories = Array.from(document.querySelectorAll('input[name="item_category"]:checked'))
+                    .map(cb => cb.value);
+                
+                if (checkedCategories.length === 0) {
+                    alert('買取品目を1つ以上選択してください。');
+                    return;
+                }
+                
+                // 送信前にdisabledを一時的に解除（FormDataに含めるため）
+                const timeField = document.getElementById('reservation-time');
+                timeField.removeAttribute('disabled');
+                
                 const formData = new FormData(e.target);
                 const data = Object.fromEntries(formData.entries());
+                
+                // 複数選択された買取品目をカンマ区切りで結合
+                data.item_category = checkedCategories.join(', ');
+                
+                // 再度disabledに戻す
+                timeField.setAttribute('disabled', 'true');
                 
                 try {
                     const response = await axios.post('/api/reservations', data);
@@ -846,9 +887,14 @@ app.get('/', (c) => {
                     if (response.data.success) {
                         alert('予約を受け付けました！\\n予約ID: ' + response.data.data.id);
                         e.target.reset();
+                        // 日付と時間のフィールドをクリア
+                        document.getElementById('reservation-date').value = '';
+                        document.getElementById('reservation-time').value = '';
                     }
                 } catch (error) {
                     alert('エラーが発生しました: ' + (error.response?.data?.error || error.message));
+                    // エラー時もdisabledを維持
+                    timeField.setAttribute('disabled', 'true');
                 }
             });
 
@@ -1013,9 +1059,19 @@ app.get('/', (c) => {
                 // 予約フォームのタブに切り替え
                 showSection('booking');
                 
-                // 日付と時間を自動入力
-                document.getElementById('reservation-date').value = date;
-                document.getElementById('reservation-time').value = time;
+                // 日付と時間を自動入力（送信時のために一時的に有効化）
+                const dateField = document.getElementById('reservation-date');
+                const timeField = document.getElementById('reservation-time');
+                
+                dateField.removeAttribute('readonly');
+                timeField.removeAttribute('disabled');
+                
+                dateField.value = date;
+                timeField.value = time;
+                
+                // 再度読み取り専用に
+                dateField.setAttribute('readonly', 'true');
+                timeField.setAttribute('disabled', 'true');
                 
                 // フォームまでスクロール
                 document.getElementById('booking-form').scrollIntoView({ behavior: 'smooth' });
