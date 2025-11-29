@@ -1334,7 +1334,7 @@ app.get('/', (c) => {
                                         const slotClass = isDisabled ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-green-500 text-white hover:bg-green-600 cursor-pointer';
                                         
                                         return \`
-                                            <button class="text-sm py-2 px-2 rounded font-medium \${slotClass}" 
+                                            <button class="w-full text-sm py-2 px-2 rounded font-medium text-center \${slotClass}" 
                                                 onclick="\${isDisabled ? '' : \`selectTimeSlot('\${date}', '\${time}')\`}"
                                                 \${isDisabled ? 'disabled' : ''}
                                                 title="\${isTooLate && !isBooked ? '予約締切（4時間前）' : isBooked ? '予約済み' : '予約可能'}">
