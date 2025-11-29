@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { serveStatic } from 'hono/cloudflare-workers'
+import { adminHTML } from './admin.html'
 
 type Bindings = {
   DB: D1Database;
@@ -40,9 +41,51 @@ async function initializeDatabase(db: D1Database) {
     db.prepare('CREATE INDEX IF NOT EXISTS idx_reservation_date ON reservations(reservation_date)'),
     db.prepare('CREATE INDEX IF NOT EXISTS idx_customer_email ON reservations(customer_email)'),
     db.prepare('CREATE INDEX IF NOT EXISTS idx_status ON reservations(status)'),
-    db.prepare('CREATE INDEX IF NOT EXISTS idx_created_at ON reservations(created_at)')
+    db.prepare('CREATE INDEX IF NOT EXISTS idx_created_at ON reservations(created_at)'),
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS admins (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `),
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS unavailable_dates (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        date TEXT UNIQUE NOT NULL,
+        reason TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `),
+    db.prepare('CREATE INDEX IF NOT EXISTS idx_unavailable_dates ON unavailable_dates(date)'),
+    db.prepare("INSERT OR IGNORE INTO admins (username, password_hash) VALUES ('admin', 'admin123')")
   ]);
 }
+
+// エリアチェック関数（都内・横浜市）
+function isValidArea(postalCode: string, address: string): boolean {
+  // 東京都の郵便番号範囲: 100-0000 〜 199-9999, 200-0000 〜 209-9999
+  const tokyoPostalPattern = /^(1[0-9]{2}|20[0-9])-\d{4}$/;
+  
+  // 横浜市の郵便番号範囲: 220-0000 〜 247-9999
+  const yokohamaPostalPattern = /^(22[0-9]|23[0-9]|24[0-7])-\d{4}$/;
+  
+  // 住所チェック
+  const isTokyoAddress = address.includes('東京都');
+  const isYokohamaAddress = address.includes('横浜市');
+  
+  return (tokyoPostalPattern.test(postalCode) && isTokyoAddress) ||
+         (yokohamaPostalPattern.test(postalCode) && isYokohamaAddress);
+}
+
+// 時間帯のマッピング
+const TIME_SLOTS = {
+  '1': '10:00',
+  '2': '12:00',
+  '3': '14:00',
+  '4': '16:00'
+};
 
 // API: 予約一覧取得
 app.get('/api/reservations', async (c) => {
@@ -141,6 +184,54 @@ app.post('/api/reservations', async (c) => {
       return c.json({
         success: false,
         error: '必須項目が入力されていません'
+      }, 400);
+    }
+    
+    // エリアチェック
+    if (!isValidArea(customer_postal_code, customer_address)) {
+      return c.json({
+        success: false,
+        error: '申し訳ございません。ご指定のエリアは出張対応エリア外です。（対応エリア：東京都内、横浜市）'
+      }, 400);
+    }
+    
+    // 不可日チェック
+    const { results: unavailableCheck } = await env.DB.prepare(
+      'SELECT * FROM unavailable_dates WHERE date = ?'
+    ).bind(reservation_date).all();
+    
+    if (unavailableCheck.length > 0) {
+      return c.json({
+        success: false,
+        error: 'その日は出張対応できません。別の日付をお選びください。'
+      }, 400);
+    }
+    
+    // 同日同時間帯の予約数チェック（1日4枠まで）
+    const { results: sameTimeReservations } = await env.DB.prepare(`
+      SELECT COUNT(*) as count FROM reservations
+      WHERE reservation_date = ? AND reservation_time = ?
+      AND status != 'cancelled'
+    `).bind(reservation_date, reservation_time).all();
+    
+    if (sameTimeReservations[0].count >= 1) {
+      return c.json({
+        success: false,
+        error: 'その時間帯は既に予約が埋まっています。別の時間帯をお選びください。'
+      }, 400);
+    }
+    
+    // 同日の総予約数チェック
+    const { results: sameDateReservations } = await env.DB.prepare(`
+      SELECT COUNT(*) as count FROM reservations
+      WHERE reservation_date = ?
+      AND status != 'cancelled'
+    `).bind(reservation_date).all();
+    
+    if (sameDateReservations[0].count >= 4) {
+      return c.json({
+        success: false,
+        error: 'その日は既に予約が満員です。別の日付をお選びください。'
       }, 400);
     }
     
@@ -297,6 +388,170 @@ app.get('/api/calendar', async (c) => {
   }
 });
 
+// ========== 管理者用API ==========
+
+// API: 管理者ログイン
+app.post('/api/admin/login', async (c) => {
+  try {
+    const { env } = c;
+    await initializeDatabase(env.DB);
+    
+    const { username, password } = await c.req.json();
+    
+    const { results } = await env.DB.prepare(
+      'SELECT * FROM admins WHERE username = ? AND password_hash = ?'
+    ).bind(username, password).all();
+    
+    if (results.length === 0) {
+      return c.json({
+        success: false,
+        error: 'ユーザー名またはパスワードが間違っています'
+      }, 401);
+    }
+    
+    return c.json({
+      success: true,
+      data: {
+        username: results[0].username
+      }
+    });
+  } catch (error: any) {
+    return c.json({
+      success: false,
+      error: error.message
+    }, 500);
+  }
+});
+
+// API: 管理者用カレンダー（スロット詳細込み）
+app.get('/api/admin/calendar', async (c) => {
+  try {
+    const { env } = c;
+    await initializeDatabase(env.DB);
+    
+    const { year, month } = c.req.query();
+    
+    if (!year || !month) {
+      return c.json({
+        success: false,
+        error: 'year と month パラメータが必要です'
+      }, 400);
+    }
+    
+    const startDate = `${year}-${month.padStart(2, '0')}-01`;
+    const nextMonth = parseInt(month) === 12 ? 1 : parseInt(month) + 1;
+    const nextYear = parseInt(month) === 12 ? parseInt(year) + 1 : parseInt(year);
+    const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+    
+    // 予約データ取得
+    const { results: reservations } = await env.DB.prepare(`
+      SELECT 
+        reservation_date,
+        reservation_time,
+        COUNT(*) as count
+      FROM reservations
+      WHERE reservation_date >= ? AND reservation_date < ?
+      AND status != 'cancelled'
+      GROUP BY reservation_date, reservation_time
+      ORDER BY reservation_date, reservation_time
+    `).bind(startDate, endDate).all();
+    
+    // 不可日取得
+    const { results: unavailableDates } = await env.DB.prepare(`
+      SELECT date, reason FROM unavailable_dates
+      WHERE date >= ? AND date < ?
+    `).bind(startDate, endDate).all();
+    
+    return c.json({
+      success: true,
+      data: {
+        reservations,
+        unavailableDates
+      }
+    });
+  } catch (error: any) {
+    return c.json({
+      success: false,
+      error: error.message
+    }, 500);
+  }
+});
+
+// API: 出張不可日の追加
+app.post('/api/admin/unavailable-dates', async (c) => {
+  try {
+    const { env } = c;
+    await initializeDatabase(env.DB);
+    
+    const { date, reason } = await c.req.json();
+    
+    await env.DB.prepare(
+      'INSERT OR REPLACE INTO unavailable_dates (date, reason) VALUES (?, ?)'
+    ).bind(date, reason || '').run();
+    
+    return c.json({
+      success: true,
+      message: '出張不可日を設定しました'
+    });
+  } catch (error: any) {
+    return c.json({
+      success: false,
+      error: error.message
+    }, 500);
+  }
+});
+
+// API: 出張不可日の削除
+app.delete('/api/admin/unavailable-dates/:date', async (c) => {
+  try {
+    const { env } = c;
+    await initializeDatabase(env.DB);
+    
+    const date = c.req.param('date');
+    
+    await env.DB.prepare(
+      'DELETE FROM unavailable_dates WHERE date = ?'
+    ).bind(date).run();
+    
+    return c.json({
+      success: true,
+      message: '出張不可日を削除しました'
+    });
+  } catch (error: any) {
+    return c.json({
+      success: false,
+      error: error.message
+    }, 500);
+  }
+});
+
+// API: エリアチェック
+app.post('/api/check-area', async (c) => {
+  try {
+    const { postal_code, address } = await c.req.json();
+    
+    const isValid = isValidArea(postal_code, address);
+    
+    return c.json({
+      success: true,
+      isValid,
+      message: isValid 
+        ? '出張可能エリアです' 
+        : '申し訳ございません。ご指定のエリアは出張対応エリア外です。（対応エリア：東京都内、横浜市）'
+    });
+  } catch (error: any) {
+    return c.json({
+      success: false,
+      error: error.message
+    }, 500);
+  }
+});
+
+// 管理者画面のルート
+app.get('/admin', (c) => {
+  return c.html(adminHTML);
+});
+
 // フロントエンドのルート
 app.get('/', (c) => {
   return c.html(`
@@ -350,6 +605,18 @@ app.get('/', (c) => {
                         <i class="fas fa-calendar-plus mr-2 text-blue-600"></i>
                         出張買取のご予約
                     </h2>
+                    
+                    <!-- 注意事項 -->
+                    <div class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 text-sm">
+                        <h3 class="font-bold text-blue-800 mb-2">
+                            <i class="fas fa-info-circle mr-1"></i>ご予約前にご確認ください
+                        </h3>
+                        <ul class="space-y-1 text-blue-700">
+                            <li><i class="fas fa-check mr-2"></i>対応エリア：東京都内、横浜市</li>
+                            <li><i class="fas fa-check mr-2"></i>1日4枠限定での受付となります</li>
+                            <li><i class="fas fa-check mr-2"></i>予約状況によりご希望に添えない場合がございます</li>
+                        </ul>
+                    </div>
                     
                     <form id="booking-form" class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
