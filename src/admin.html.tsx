@@ -586,10 +586,12 @@ export const adminHTML = `
                 );
                 
                 await Promise.all(promises);
-                alert(\`\${selectedDates.size}日分を出張不可日に設定しました\`);
                 
+                // データを再取得してからモードを解除
+                await loadCalendar();
                 cancelBulkSelectMode();
-                loadCalendar();
+                
+                alert(\`\${selectedDates.size}日分を出張不可日に設定しました\`);
             } catch (error) {
                 alert('エラーが発生しました: ' + (error.response?.data?.error || error.message));
             }
@@ -612,10 +614,12 @@ export const adminHTML = `
                 );
                 
                 await Promise.all(promises);
-                alert(\`\${selectedDates.size}日分を出張可能日に設定しました\`);
                 
+                // データを再取得してからモードを解除
+                await loadCalendar();
                 cancelBulkSelectMode();
-                loadCalendar();
+                
+                alert(\`\${selectedDates.size}日分を出張可能日に設定しました\`);
             } catch (error) {
                 alert('エラーが発生しました: ' + (error.response?.data?.error || error.message));
             }

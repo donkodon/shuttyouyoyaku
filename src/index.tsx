@@ -905,26 +905,35 @@ app.get('/', (c) => {
                     \`\${currentYear}年\${currentMonth}月\`;
                 
                 try {
-                    const response = await axios.get('/api/calendar', {
+                    const response = await axios.get('/api/admin/calendar', {
                         params: { year: currentYear, month: currentMonth }
                     });
                     
                     const reservationMap = {};
-                    response.data.data.forEach(item => {
-                        reservationMap[item.reservation_date] = item.count;
+                    response.data.data.reservations.forEach(item => {
+                        if (!reservationMap[item.reservation_date]) {
+                            reservationMap[item.reservation_date] = 0;
+                        }
+                        reservationMap[item.reservation_date] += item.count;
                     });
                     
-                    renderCalendar(reservationMap);
+                    const unavailableMap = {};
+                    response.data.data.unavailableDates.forEach(item => {
+                        unavailableMap[item.date] = item.reason;
+                    });
+                    
+                    renderCalendar(reservationMap, unavailableMap);
                 } catch (error) {
                     console.error('Error loading calendar:', error);
                 }
             }
 
             // カレンダー描画
-            function renderCalendar(reservationMap) {
+            function renderCalendar(reservationMap, unavailableMap) {
                 const grid = document.getElementById('calendar-grid');
                 const firstDay = new Date(currentYear, currentMonth - 1, 1).getDay();
                 const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+                const today = new Date().toISOString().split('T')[0];
                 
                 const weekDays = ['日', '月', '火', '水', '木', '金', '土'];
                 let html = weekDays.map(day => 
@@ -938,14 +947,31 @@ app.get('/', (c) => {
                 for (let day = 1; day <= daysInMonth; day++) {
                     const date = \`\${currentYear}-\${String(currentMonth).padStart(2, '0')}-\${String(day).padStart(2, '0')}\`;
                     const count = reservationMap[date] || 0;
-                    const hasReservation = count > 0 ? 'has-reservation' : '';
+                    const isUnavailable = unavailableMap[date];
+                    const isPast = new Date(date) < new Date(today);
+                    
+                    let cellClass = 'calendar-day p-2';
+                    let cellStyle = '';
+                    
+                    if (isUnavailable) {
+                        cellClass += ' bg-gray-300';
+                        cellStyle = 'opacity: 0.7;';
+                    } else if (count > 0) {
+                        cellClass += ' has-reservation';
+                    }
                     
                     html += \`
-                        <div class="calendar-day \${hasReservation} p-2">
+                        <div class="\${cellClass}" style="\${cellStyle}">
                             <div class="font-bold">\${day}</div>
-                            \${count > 0 ? \`<div class="text-xs text-orange-600 mt-1">
-                                <i class="fas fa-calendar-check"></i> \${count}件
-                            </div>\` : ''}
+                            \${isUnavailable ? \`
+                                <div class="text-xs text-red-600 font-semibold mt-1">
+                                    <i class="fas fa-ban"></i> 予約不可
+                                </div>
+                            \` : \`
+                                \${count > 0 ? \`<div class="text-xs text-orange-600 mt-1">
+                                    <i class="fas fa-calendar-check"></i> \${count}件
+                                </div>\` : ''}
+                            \`}
                         </div>
                     \`;
                 }
