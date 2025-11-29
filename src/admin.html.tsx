@@ -581,18 +581,34 @@ export const adminHTML = `
             if (reason === null) return;
             
             try {
-                const promises = Array.from(selectedDates).map(date => 
+                const dates = Array.from(selectedDates);
+                console.log('クローズ対象の日付:', dates);
+                
+                const promises = dates.map(date => 
                     axios.post('/api/admin/unavailable-dates', { date, reason })
+                        .then(res => {
+                            console.log(\`\${date}: 成功\`, res.data);
+                            return res;
+                        })
+                        .catch(err => {
+                            console.error(\`\${date}: 失敗\`, err);
+                            throw err;
+                        })
                 );
                 
                 await Promise.all(promises);
+                console.log('全ての日付のクローズが完了');
                 
                 // データを再取得してからモードを解除
                 await loadCalendar();
-                cancelBulkSelectMode();
+                console.log('カレンダーデータを再取得完了');
                 
-                alert(\`\${selectedDates.size}日分を出張不可日に設定しました\`);
+                cancelBulkSelectMode();
+                console.log('一括選択モードを解除');
+                
+                alert(\`\${dates.length}日分を出張不可日に設定しました\`);
             } catch (error) {
+                console.error('一括クローズエラー:', error);
                 alert('エラーが発生しました: ' + (error.response?.data?.error || error.message));
             }
         }
@@ -609,18 +625,34 @@ export const adminHTML = `
             }
             
             try {
-                const promises = Array.from(selectedDates).map(date => 
+                const dates = Array.from(selectedDates);
+                console.log('オープン対象の日付:', dates);
+                
+                const promises = dates.map(date => 
                     axios.delete(\`/api/admin/unavailable-dates/\${date}\`)
+                        .then(res => {
+                            console.log(\`\${date}: 成功\`, res.data);
+                            return res;
+                        })
+                        .catch(err => {
+                            console.error(\`\${date}: 失敗\`, err);
+                            throw err;
+                        })
                 );
                 
                 await Promise.all(promises);
+                console.log('全ての日付のオープンが完了');
                 
                 // データを再取得してからモードを解除
                 await loadCalendar();
-                cancelBulkSelectMode();
+                console.log('カレンダーデータを再取得完了');
                 
-                alert(\`\${selectedDates.size}日分を出張可能日に設定しました\`);
+                cancelBulkSelectMode();
+                console.log('一括選択モードを解除');
+                
+                alert(\`\${dates.length}日分を出張可能日に設定しました\`);
             } catch (error) {
+                console.error('一括オープンエラー:', error);
                 alert('エラーが発生しました: ' + (error.response?.data?.error || error.message));
             }
         }
