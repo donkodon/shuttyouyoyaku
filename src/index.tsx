@@ -862,16 +862,23 @@ app.get('/', (c) => {
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
                         </div>
                         
-                        <div class="flex justify-end space-x-4">
-                            <button type="reset"
-                                class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-                                クリア
+                        <div class="flex justify-between space-x-4">
+                            <button type="button" onclick="showSection('calendar')"
+                                class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                                <i class="fas fa-arrow-left mr-2"></i>
+                                カレンダーに戻る
                             </button>
-                            <button type="submit"
-                                class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                                <i class="fas fa-paper-plane mr-2"></i>
-                                予約を送信
-                            </button>
+                            <div class="flex space-x-4">
+                                <button type="reset"
+                                    class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                                    クリア
+                                </button>
+                                <button type="submit"
+                                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                    <i class="fas fa-paper-plane mr-2"></i>
+                                    予約を送信
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
