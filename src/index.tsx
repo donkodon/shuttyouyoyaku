@@ -594,19 +594,11 @@ app.get('/', (c) => {
     </head>
     <body class="bg-gray-50">
         <nav class="bg-blue-600 text-white p-4 shadow-lg">
-            <div class="container mx-auto flex justify-between items-center">
-                <h1 class="text-2xl font-bold">
+            <div class="container mx-auto">
+                <h1 class="text-2xl font-bold text-center">
                     <i class="fas fa-truck mr-2"></i>
                     出張買取予約システム
                 </h1>
-                <div class="space-x-4">
-                    <button onclick="showSection('calendar')" class="hover:text-blue-200">
-                        <i class="fas fa-calendar mr-1"></i>予約カレンダー
-                    </button>
-                    <button onclick="showSection('list')" class="hover:text-blue-200">
-                        <i class="fas fa-list mr-1"></i>予約状況確認
-                    </button>
-                </div>
             </div>
         </nav>
 
@@ -933,16 +925,12 @@ app.get('/', (c) => {
                             <span>予約可能</span>
                         </div>
                         <div class="flex items-center">
-                            <div class="w-4 h-4 bg-red-500 rounded mr-2"></div>
-                            <span>予約済み</span>
-                        </div>
-                        <div class="flex items-center">
                             <div class="w-4 h-4 bg-gray-400 rounded mr-2"></div>
-                            <span>予約不可</span>
+                            <span>予約締切・予約不可</span>
                         </div>
                         <div class="text-gray-600">
                             <i class="fas fa-info-circle mr-1"></i>
-                            緑色の時間帯をクリックして予約フォームに進めます
+                            緑色の時間帯をクリックして予約できます（予約は4時間前まで）
                         </div>
                     </div>
                     
@@ -1113,6 +1101,7 @@ app.get('/', (c) => {
                 const firstDay = new Date(currentYear, currentMonth - 1, 1).getDay();
                 const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
                 const today = new Date().toISOString().split('T')[0];
+                const now = new Date();
                 
                 const timeSlots = ['10:00', '12:00', '14:00', '16:00'];
                 const slotLabels = ['10-12時', '12-14時', '14-16時', '16-18時'];
@@ -1151,11 +1140,22 @@ app.get('/', (c) => {
                                     \${timeSlots.map((time, idx) => {
                                         const count = reservationMap[date]?.[time] || 0;
                                         const isBooked = count > 0;
-                                        const slotClass = isBooked ? 'bg-red-500 text-white cursor-not-allowed' : 'bg-green-500 text-white hover:bg-green-600 cursor-pointer';
+                                        
+                                        // 4時間前チェック: 予約時間の4時間前を過ぎたらクローズ
+                                        const [hour, minute] = time.split(':').map(Number);
+                                        const slotDateTime = new Date(date);
+                                        slotDateTime.setHours(hour, minute, 0, 0);
+                                        const fourHoursBefore = new Date(slotDateTime.getTime() - (4 * 60 * 60 * 1000));
+                                        const isTooLate = now >= fourHoursBefore;
+                                        
+                                        const isDisabled = isBooked || isTooLate;
+                                        const slotClass = isDisabled ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-green-500 text-white hover:bg-green-600 cursor-pointer';
+                                        
                                         return \`
                                             <button class="text-xs py-1 px-1 rounded \${slotClass}" 
-                                                onclick="\${isBooked ? '' : \`selectTimeSlot('\${date}', '\${time}')\`}"
-                                                \${isBooked ? 'disabled' : ''}>
+                                                onclick="\${isDisabled ? '' : \`selectTimeSlot('\${date}', '\${time}')\`}"
+                                                \${isDisabled ? 'disabled' : ''}
+                                                title="\${isTooLate && !isBooked ? '予約締切（4時間前）' : isBooked ? '予約済み' : '予約可能'}">
                                                 \${slotLabels[idx]}
                                             </button>
                                         \`;
