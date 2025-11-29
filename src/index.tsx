@@ -287,11 +287,11 @@ ${customer_notes ? `\nご要望・備考:\n${customer_notes}` : ''}
 【重要なご確認事項】
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-★ ご予約当日、訪問先へ向かう前に必ずお電話にてご連絡ください。
-  お客様のご都合を確認の上、お伺いいたします。
+★ ご予約当日、訪問先へ向かう前にお電話させていただきます。
+  連絡が繋がらなかった場合、キャンセルとさせていただくことがございます。
 
 ★ ご本人様確認のため、運転免許証などの身分証明書をご用意ください。
-  身分証明書をご提示いただけない場合、買取をお断りする場合がございます。
+  身分証明書をご提示いただけない場合、買取ができません。
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -634,8 +634,8 @@ app.get('/', (c) => {
                         </h3>
                         <ul class="space-y-1 text-blue-700">
                             <li><i class="fas fa-check mr-2"></i>対応エリア：東京都内、横浜市</li>
-                            <li><i class="fas fa-phone mr-2"></i><span class="font-bold">ご予約当日、向かう前に必ずお電話にてご連絡ください</span></li>
-                            <li><i class="fas fa-id-card mr-2"></i><span class="font-bold">ご本人様確認のため、運転免許証などの身分証明書をご用意ください</span></li>
+                            <li><i class="fas fa-phone mr-2"></i><span class="font-bold">ご予約当日、訪問先へ向かう前にお電話させていただきます</span><br><span class="text-sm">連絡が繋がらなかった場合、キャンセルとさせていただくことがございます</span></li>
+                            <li><i class="fas fa-id-card mr-2"></i><span class="font-bold">ご本人様確認のため、運転免許証などの身分証明書をご用意ください</span><br><span class="text-sm">身分証明書をご提示いただけない場合、買取ができません</span></li>
                             <li><i class="fas fa-check mr-2"></i>予約状況によりご希望に添えない場合がございます</li>
                         </ul>
                     </div>
@@ -988,11 +988,11 @@ app.get('/', (c) => {
                             <ul class="space-y-2 text-yellow-800">
                                 <li class="flex items-start">
                                     <i class="fas fa-phone mt-1 mr-2"></i>
-                                    <span><span class="font-bold">ご予約当日、訪問先へ向かう前に必ずお電話にてご連絡ください。</span><br>お客様のご都合を確認の上、お伺いいたします。</span>
+                                    <span><span class="font-bold">ご予約当日、訪問先へ向かう前にお電話させていただきます。</span><br>連絡が繋がらなかった場合、キャンセルとさせていただくことがございます。</span>
                                 </li>
                                 <li class="flex items-start">
                                     <i class="fas fa-id-card mt-1 mr-2"></i>
-                                    <span><span class="font-bold">ご本人様確認のため、運転免許証などの身分証明書をご用意ください。</span><br>身分証明書をご提示いただけない場合、買取をお断りする場合がございます。</span>
+                                    <span><span class="font-bold">ご本人様確認のため、運転免許証などの身分証明書をご用意ください。</span><br>身分証明書をご提示いただけない場合、買取ができません。</span>
                                 </li>
                             </ul>
                         </div>
