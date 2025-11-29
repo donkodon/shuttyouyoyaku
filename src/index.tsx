@@ -689,7 +689,7 @@ app.get('/', (c) => {
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 買取品目 <span class="text-red-500">*</span>（複数選択可）
                             </label>
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 border border-gray-300 rounded-lg bg-gray-50">
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 border border-gray-300 rounded-lg bg-gray-50">
                                 <label class="flex items-center space-x-2 cursor-pointer">
                                     <input type="checkbox" name="item_category" value="家電" 
                                         class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
@@ -714,6 +714,56 @@ app.get('/', (c) => {
                                     <input type="checkbox" name="item_category" value="楽器"
                                         class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
                                     <span class="text-sm">楽器</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="item_category" value="おもちゃ"
+                                        class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                                    <span class="text-sm">おもちゃ</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="item_category" value="トレーディングカード"
+                                        class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                                    <span class="text-sm">トレカ</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="item_category" value="本"
+                                        class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                                    <span class="text-sm">本</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="item_category" value="ゲーム機本体"
+                                        class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                                    <span class="text-sm">ゲーム機本体</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="item_category" value="ゲームソフト"
+                                        class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                                    <span class="text-sm">ゲームソフト</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="item_category" value="携帯電話"
+                                        class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                                    <span class="text-sm">携帯電話</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="item_category" value="PC"
+                                        class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                                    <span class="text-sm">PC</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="item_category" value="バッグ"
+                                        class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                                    <span class="text-sm">バッグ</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="item_category" value="ジュエリー"
+                                        class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                                    <span class="text-sm">ジュエリー</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" name="item_category" value="貴金属"
+                                        class="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                                    <span class="text-sm">貴金属</span>
                                 </label>
                                 <label class="flex items-center space-x-2 cursor-pointer">
                                     <input type="checkbox" name="item_category" value="その他"
