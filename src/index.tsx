@@ -278,10 +278,20 @@ ${customer_postal_code ? `郵便番号: 〒${customer_postal_code}\n` : ''}訪�
 ■ 買取情報
 買取品目: ${item_category}
 品目の詳細: ${item_description}
-概算点数: ${estimated_quantity}点
+概算点数: ${estimated_quantity}
 駐車場: ${has_parking}
 エレベーター: ${has_elevator}
 ${customer_notes ? `\nご要望・備考:\n${customer_notes}` : ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+【重要なご確認事項】
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+★ ご予約当日、訪問先へ向かう前に必ずお電話にてご連絡ください。
+  お客様のご都合を確認の上、お伺いいたします。
+
+★ ご本人様確認のため、運転免許証などの身分証明書をご用意ください。
+  身分証明書をご提示いただけない場合、買取をお断りする場合がございます。
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -624,7 +634,8 @@ app.get('/', (c) => {
                         </h3>
                         <ul class="space-y-1 text-blue-700">
                             <li><i class="fas fa-check mr-2"></i>対応エリア：東京都内、横浜市</li>
-                            <li><i class="fas fa-check mr-2"></i>1日4枠限定での受付となります</li>
+                            <li><i class="fas fa-phone mr-2"></i><span class="font-bold">ご予約当日、向かう前に必ずお電話にてご連絡ください</span></li>
+                            <li><i class="fas fa-id-card mr-2"></i><span class="font-bold">ご本人様確認のため、運転免許証などの身分証明書をご用意ください</span></li>
                             <li><i class="fas fa-check mr-2"></i>予約状況によりご希望に添えない場合がございます</li>
                         </ul>
                     </div>
@@ -801,9 +812,15 @@ app.get('/', (c) => {
                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                 概算点数 <span class="text-red-500">*</span>
                             </label>
-                            <input type="number" name="estimated_quantity" min="1" required
-                                placeholder="例：5"
+                            <select name="estimated_quantity" required
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">選択してください</option>
+                                <option value="10点程度">10点程度</option>
+                                <option value="10〜50点程度">10〜50点程度</option>
+                                <option value="50〜100点程度">50〜100点程度</option>
+                                <option value="100〜200点程度">100〜200点程度</option>
+                                <option value="200点以上">200点以上</option>
+                            </select>
                         </div>
                         
                         <div>
@@ -961,7 +978,24 @@ app.get('/', (c) => {
                             <i class="fas fa-check-circle text-6xl text-green-600"></i>
                         </div>
                         <h2 class="text-3xl font-bold text-gray-800 mb-2">予約が完了しました</h2>
-                        <p class="text-gray-600">ご予約ありがとうございます。確認メールを送信いたしました。</p>
+                        <p class="text-gray-600 mb-4">ご予約ありがとうございます。確認メールを送信いたしました。</p>
+                        
+                        <!-- 重要事項 -->
+                        <div class="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-500 text-left">
+                            <h3 class="font-bold text-yellow-800 mb-2">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>重要なご確認事項
+                            </h3>
+                            <ul class="space-y-2 text-yellow-800">
+                                <li class="flex items-start">
+                                    <i class="fas fa-phone mt-1 mr-2"></i>
+                                    <span><span class="font-bold">ご予約当日、訪問先へ向かう前に必ずお電話にてご連絡ください。</span><br>お客様のご都合を確認の上、お伺いいたします。</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-id-card mt-1 mr-2"></i>
+                                    <span><span class="font-bold">ご本人様確認のため、運転免許証などの身分証明書をご用意ください。</span><br>身分証明書をご提示いただけない場合、買取をお断りする場合がございます。</span>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                     
                     <div class="border-t border-gray-200 pt-6">
@@ -1104,7 +1138,7 @@ app.get('/', (c) => {
                         </div>
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <p class="text-sm text-gray-600 mb-1">概算点数</p>
-                            <p class="font-semibold text-gray-800">\${reservationData.estimated_quantity}点</p>
+                            <p class="font-semibold text-gray-800">\${reservationData.estimated_quantity}</p>
                         </div>
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <p class="text-sm text-gray-600 mb-1">駐車場</p>
