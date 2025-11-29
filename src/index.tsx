@@ -75,22 +75,6 @@ async function initializeDatabase(db: D1Database) {
   }
 }
 
-// エリアチェック関数（都内・横浜市）
-function isValidArea(postalCode: string, address: string): boolean {
-  // 東京都の郵便番号範囲: 100-0000 〜 199-9999, 200-0000 〜 209-9999
-  const tokyoPostalPattern = /^(1[0-9]{2}|20[0-9])-\d{4}$/;
-  
-  // 横浜市の郵便番号範囲: 220-0000 〜 247-9999
-  const yokohamaPostalPattern = /^(22[0-9]|23[0-9]|24[0-7])-\d{4}$/;
-  
-  // 住所チェック
-  const isTokyoAddress = address.includes('東京都');
-  const isYokohamaAddress = address.includes('横浜市');
-  
-  return (tokyoPostalPattern.test(postalCode) && isTokyoAddress) ||
-         (yokohamaPostalPattern.test(postalCode) && isYokohamaAddress);
-}
-
 // 時間帯のマッピング
 const TIME_SLOTS = {
   '1': '10:00',
@@ -191,7 +175,7 @@ app.post('/api/reservations', async (c) => {
       has_elevator
     } = body;
     
-    // バリデーション（郵便番号は任意）
+    // バリデーション（郵便番号は任意、エリアチェックなし）
     if (!customer_name || !customer_email || !customer_phone || 
         !customer_address ||
         !reservation_date || !reservation_time || !item_category ||
@@ -200,14 +184,6 @@ app.post('/api/reservations', async (c) => {
       return c.json({
         success: false,
         error: '必須項目が入力されていません'
-      }, 400);
-    }
-    
-    // エリアチェック
-    if (!isValidArea(customer_postal_code || '', customer_address)) {
-      return c.json({
-        success: false,
-        error: '申し訳ございません。ご指定のエリアは出張対応エリア外です。（対応エリア：東京都内、横浜市）'
       }, 400);
     }
     
@@ -542,27 +518,6 @@ app.delete('/api/admin/unavailable-dates/:date', async (c) => {
 });
 
 // API: エリアチェック
-app.post('/api/check-area', async (c) => {
-  try {
-    const { postal_code, address } = await c.req.json();
-    
-    const isValid = isValidArea(postal_code, address);
-    
-    return c.json({
-      success: true,
-      isValid,
-      message: isValid 
-        ? '出張可能エリアです' 
-        : '申し訳ございません。ご指定のエリアは出張対応エリア外です。（対応エリア：東京都内、横浜市）'
-    });
-  } catch (error: any) {
-    return c.json({
-      success: false,
-      error: error.message
-    }, 500);
-  }
-});
-
 // 管理者画面のルート
 app.get('/admin', (c) => {
   return c.html(adminHTML);
