@@ -584,14 +584,11 @@ app.get('/', (c) => {
                     出張買取予約システム
                 </h1>
                 <div class="space-x-4">
-                    <button onclick="showSection('booking')" class="hover:text-blue-200">
-                        <i class="fas fa-calendar-plus mr-1"></i>予約する
+                    <button onclick="showSection('calendar')" class="hover:text-blue-200">
+                        <i class="fas fa-calendar mr-1"></i>予約カレンダー
                     </button>
                     <button onclick="showSection('list')" class="hover:text-blue-200">
-                        <i class="fas fa-list mr-1"></i>予約一覧
-                    </button>
-                    <button onclick="showSection('calendar')" class="hover:text-blue-200">
-                        <i class="fas fa-calendar mr-1"></i>カレンダー
+                        <i class="fas fa-list mr-1"></i>予約状況確認
                     </button>
                 </div>
             </div>
@@ -776,7 +773,7 @@ app.get('/', (c) => {
             <!-- カレンダーセクション -->
             <div id="calendar-section" class="section hidden">
                 <div class="bg-white rounded-lg shadow-md p-6">
-                    <div class="flex justify-between items-center mb-6">
+                    <div class="flex justify-between items-center mb-4">
                         <h2 class="text-2xl font-bold text-gray-800">
                             <i class="fas fa-calendar mr-2 text-blue-600"></i>
                             予約カレンダー
@@ -789,6 +786,26 @@ app.get('/', (c) => {
                             <button onclick="changeMonth(1)" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
                                 <i class="fas fa-chevron-right"></i>
                             </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 凡例 -->
+                    <div class="flex items-center space-x-6 text-sm mb-4 p-3 bg-blue-50 rounded">
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
+                            <span>予約可能</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-red-500 rounded mr-2"></div>
+                            <span>予約済み</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-gray-400 rounded mr-2"></div>
+                            <span>予約不可</span>
+                        </div>
+                        <div class="text-gray-600">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            緑色の時間帯をクリックして予約フォームに進めます
                         </div>
                     </div>
                     
@@ -909,12 +926,13 @@ app.get('/', (c) => {
                         params: { year: currentYear, month: currentMonth }
                     });
                     
+                    // 時間帯別予約マップ作成
                     const reservationMap = {};
                     response.data.data.reservations.forEach(item => {
                         if (!reservationMap[item.reservation_date]) {
-                            reservationMap[item.reservation_date] = 0;
+                            reservationMap[item.reservation_date] = {};
                         }
-                        reservationMap[item.reservation_date] += item.count;
+                        reservationMap[item.reservation_date][item.reservation_time] = item.count;
                     });
                     
                     const unavailableMap = {};
@@ -928,12 +946,15 @@ app.get('/', (c) => {
                 }
             }
 
-            // カレンダー描画
+            // カレンダー描画（時間帯スロット表示）
             function renderCalendar(reservationMap, unavailableMap) {
                 const grid = document.getElementById('calendar-grid');
                 const firstDay = new Date(currentYear, currentMonth - 1, 1).getDay();
                 const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
                 const today = new Date().toISOString().split('T')[0];
+                
+                const timeSlots = ['10:00', '12:00', '14:00', '16:00'];
+                const slotLabels = ['10-12時', '12-14時', '14-16時', '16-18時'];
                 
                 const weekDays = ['日', '月', '火', '水', '木', '金', '土'];
                 let html = weekDays.map(day => 
@@ -946,37 +967,58 @@ app.get('/', (c) => {
                 
                 for (let day = 1; day <= daysInMonth; day++) {
                     const date = \`\${currentYear}-\${String(currentMonth).padStart(2, '0')}-\${String(day).padStart(2, '0')}\`;
-                    const count = reservationMap[date] || 0;
-                    const isUnavailable = date in unavailableMap;  // 🔥 空文字列でもtrueになる
+                    const isUnavailable = date in unavailableMap;
                     const isPast = new Date(date) < new Date(today);
                     
                     let cellClass = 'calendar-day p-2';
-                    let cellStyle = '';
                     
-                    if (isUnavailable) {
+                    if (isUnavailable || isPast) {
                         cellClass += ' bg-gray-300';
-                        cellStyle = 'opacity: 0.7;';
-                    } else if (count > 0) {
-                        cellClass += ' has-reservation';
                     }
                     
                     html += \`
-                        <div class="\${cellClass}" style="\${cellStyle}">
-                            <div class="font-bold">\${day}</div>
+                        <div class="\${cellClass}" style="\${isUnavailable || isPast ? 'opacity: 0.7;' : ''}">
+                            <div class="font-bold mb-2">\${day}</div>
                             \${isUnavailable ? \`
-                                <div class="text-xs text-red-600 font-semibold mt-1">
+                                <div class="text-xs text-red-600 font-semibold">
                                     <i class="fas fa-ban"></i> 予約不可
                                 </div>
+                            \` : isPast ? \`
+                                <div class="text-xs text-gray-600">過去</div>
                             \` : \`
-                                \${count > 0 ? \`<div class="text-xs text-orange-600 mt-1">
-                                    <i class="fas fa-calendar-check"></i> \${count}件
-                                </div>\` : ''}
+                                <div class="grid grid-cols-2 gap-1">
+                                    \${timeSlots.map((time, idx) => {
+                                        const count = reservationMap[date]?.[time] || 0;
+                                        const isBooked = count > 0;
+                                        const slotClass = isBooked ? 'bg-red-500 text-white cursor-not-allowed' : 'bg-green-500 text-white hover:bg-green-600 cursor-pointer';
+                                        return \`
+                                            <button class="text-xs py-1 px-1 rounded \${slotClass}" 
+                                                onclick="\${isBooked ? '' : \`selectTimeSlot('\${date}', '\${time}')\`}"
+                                                \${isBooked ? 'disabled' : ''}>
+                                                \${slotLabels[idx]}
+                                            </button>
+                                        \`;
+                                    }).join('')}
+                                </div>
                             \`}
                         </div>
                     \`;
                 }
                 
                 grid.innerHTML = html;
+            }
+            
+            // 時間帯選択時に予約フォームへ遷移
+            window.selectTimeSlot = function(date, time) {
+                // 予約フォームのタブに切り替え
+                showSection('booking');
+                
+                // 日付と時間を自動入力
+                document.getElementById('reservation-date').value = date;
+                document.getElementById('reservation-time').value = time;
+                
+                // フォームまでスクロール
+                document.getElementById('booking-form').scrollIntoView({ behavior: 'smooth' });
             }
 
             // 月変更
@@ -1000,6 +1042,9 @@ app.get('/', (c) => {
                 // 最小日付を今日に設定
                 const today = new Date().toISOString().split('T')[0];
                 document.querySelector('input[name="reservation_date"]').setAttribute('min', today);
+                
+                // 初期表示はカレンダー
+                showSection('calendar');
             });
         </script>
     </body>
