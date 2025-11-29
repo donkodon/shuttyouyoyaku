@@ -138,19 +138,44 @@ export const adminHTML = `
                         </div>
                     </div>
 
-                    <!-- 凡例 -->
-                    <div class="flex items-center space-x-6 mb-4 text-sm">
-                        <div class="flex items-center">
-                            <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
-                            <span>空きあり</span>
+                    <!-- 凡例と一括操作 -->
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center space-x-6 text-sm">
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
+                                <span>空きあり</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 bg-red-500 rounded mr-2"></div>
+                                <span>予約済み</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 bg-gray-400 rounded mr-2"></div>
+                                <span>出張不可日</span>
+                            </div>
                         </div>
-                        <div class="flex items-center">
-                            <div class="w-4 h-4 bg-red-500 rounded mr-2"></div>
-                            <span>予約済み</span>
-                        </div>
-                        <div class="flex items-center">
-                            <div class="w-4 h-4 bg-gray-400 rounded mr-2"></div>
-                            <span>出張不可日</span>
+                        
+                        <div class="flex items-center space-x-2">
+                            <button id="bulk-select-btn" onclick="toggleBulkSelectMode()" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
+                                <i class="fas fa-calendar-check mr-1"></i>
+                                一括選択モード
+                            </button>
+                            <button id="bulk-close-btn" onclick="bulkCloseSelected()" 
+                                class="hidden px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">
+                                <i class="fas fa-ban mr-1"></i>
+                                選択日をクローズ
+                            </button>
+                            <button id="bulk-open-btn" onclick="bulkOpenSelected()" 
+                                class="hidden px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
+                                <i class="fas fa-check mr-1"></i>
+                                選択日をオープン
+                            </button>
+                            <button id="bulk-cancel-btn" onclick="cancelBulkSelectMode()" 
+                                class="hidden px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm">
+                                <i class="fas fa-times mr-1"></i>
+                                キャンセル
+                            </button>
                         </div>
                     </div>
                     
@@ -192,7 +217,7 @@ export const adminHTML = `
 
     <!-- 日付クリックモーダル -->
     <div id="date-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold" id="modal-date-title"></h3>
                 <button onclick="closeDateModal()" class="text-gray-500 hover:text-gray-700">
@@ -213,6 +238,8 @@ export const adminHTML = `
         let isLoggedIn = false;
         let currentDate = null;
         let calendarData = null;
+        let bulkSelectMode = false;
+        let selectedDates = new Set();
 
         // 時間帯の定義
         const timeSlots = ['10:00', '12:00', '14:00', '16:00'];
@@ -311,29 +338,38 @@ export const adminHTML = `
                 const isUnavailable = unavailableMap[date];
                 const isToday = date === today;
                 const isPast = new Date(date) < new Date(today);
+                const isSelected = selectedDates.has(date);
                 
                 let cellClass = 'calendar-cell';
                 if (isUnavailable) cellClass += ' unavailable-day';
                 if (isToday) cellClass += ' today';
+                if (isSelected && bulkSelectMode) cellClass += ' border-4 border-blue-500';
+                
+                const cellOnClick = bulkSelectMode && !isPast ? \`onclick="toggleDateSelection('\${date}')"\` : '';
+                const cellStyle = bulkSelectMode && !isPast ? 'cursor-pointer' : '';
                 
                 html += \`
-                    <div class="\${cellClass}">
+                    <div class="\${cellClass}" style="\${cellStyle}" \${cellOnClick}>
                         <div class="font-bold mb-2 flex justify-between items-center">
                             <span>\${day}</span>
-                            \${!isUnavailable && !isPast ? \`
-                                <button onclick="toggleUnavailable('\${date}')" 
-                                    class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded"
-                                    title="出張不可にする">
-                                    <i class="fas fa-ban"></i>
-                                </button>
-                            \` : ''}
-                            \${isUnavailable ? \`
-                                <button onclick="toggleUnavailable('\${date}')" 
-                                    class="text-xs px-2 py-1 bg-green-500 text-white hover:bg-green-600 rounded"
-                                    title="出張可能にする">
-                                    <i class="fas fa-check"></i>
-                                </button>
-                            \` : ''}
+                            \${!bulkSelectMode ? \`
+                                \${!isUnavailable && !isPast ? \`
+                                    <button onclick="event.stopPropagation(); toggleUnavailable('\${date}')" 
+                                        class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded"
+                                        title="出張不可にする">
+                                        <i class="fas fa-ban"></i>
+                                    </button>
+                                \` : ''}
+                                \${isUnavailable ? \`
+                                    <button onclick="event.stopPropagation(); toggleUnavailable('\${date}')" 
+                                        class="text-xs px-2 py-1 bg-green-500 text-white hover:bg-green-600 rounded"
+                                        title="出張可能にする">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                \` : ''}
+                            \` : \`
+                                \${isSelected ? '<i class="fas fa-check-circle text-blue-600"></i>' : ''}
+                            \`}
                         </div>
                         \${isUnavailable ? \`
                             <div class="text-xs text-red-600 font-semibold">出張不可</div>
@@ -347,8 +383,8 @@ export const adminHTML = `
                                                      isBooked ? 'slot-booked' : 'slot-available';
                                     return \`
                                         <button class="slot-button \${slotClass}" 
-                                            onclick="showSlotDetails('\${date}', '\${time}')"
-                                            \${isPast || isBooked ? 'disabled' : ''}>
+                                            onclick="event.stopPropagation(); showSlotDetails('\${date}', '\${time}')"
+                                            \${isPast ? 'disabled' : ''}>
                                             \${slotLabels[idx]}
                                         </button>
                                     \`;
@@ -418,15 +454,41 @@ export const adminHTML = `
                     \`;
                 } else {
                     document.getElementById('modal-content').innerHTML = reservations.map(r => \`
-                        <div class="border-b pb-4 mb-4">
-                            <div class="font-bold text-lg">\${r.customer_name}</div>
+                        <div class="border-b pb-4 mb-4 last:border-b-0">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="font-bold text-lg">\${r.customer_name}</div>
+                                <span class="px-2 py-1 rounded-full text-xs font-semibold \${getStatusClass(r.status)}">
+                                    \${getStatusLabel(r.status)}
+                                </span>
+                            </div>
                             <div class="text-sm text-gray-600 space-y-1 mt-2">
-                                <p><i class="fas fa-phone mr-2"></i>\${r.customer_phone}</p>
-                                <p><i class="fas fa-envelope mr-2"></i>\${r.customer_email}</p>
-                                <p><i class="fas fa-map-marker-alt mr-2"></i>\${r.customer_address}</p>
-                                <p><i class="fas fa-box mr-2"></i>\${r.item_category}</p>
-                                \${r.item_description ? \`<p class="text-gray-700 mt-2">\${r.item_description}</p>\` : ''}
-                                \${r.customer_notes ? \`<p class="text-blue-600 mt-2"><i class="fas fa-comment mr-1"></i>\${r.customer_notes}</p>\` : ''}
+                                <p><i class="fas fa-phone mr-2 text-blue-500"></i>\${r.customer_phone}</p>
+                                <p><i class="fas fa-envelope mr-2 text-blue-500"></i>\${r.customer_email}</p>
+                                <p><i class="fas fa-map-pin mr-2 text-blue-500"></i>〒\${r.customer_postal_code}</p>
+                                <p><i class="fas fa-map-marker-alt mr-2 text-blue-500"></i>\${r.customer_address}</p>
+                                <p><i class="fas fa-box mr-2 text-blue-500"></i>\${r.item_category}</p>
+                                \${r.estimated_quantity ? \`<p><i class="fas fa-hashtag mr-2 text-blue-500"></i>概算点数: \${r.estimated_quantity}点</p>\` : ''}
+                            </div>
+                            \${r.item_description ? \`
+                                <div class="mt-2 p-2 bg-gray-50 rounded">
+                                    <p class="text-sm font-semibold text-gray-700">品目詳細</p>
+                                    <p class="text-sm text-gray-600">\${r.item_description}</p>
+                                </div>
+                            \` : ''}
+                            \${r.customer_notes ? \`
+                                <div class="mt-2 p-2 bg-blue-50 rounded">
+                                    <p class="text-sm font-semibold text-blue-700"><i class="fas fa-comment mr-1"></i>お客様からの備考</p>
+                                    <p class="text-sm text-blue-600">\${r.customer_notes}</p>
+                                </div>
+                            \` : ''}
+                            \${r.notes ? \`
+                                <div class="mt-2 p-2 bg-yellow-50 rounded">
+                                    <p class="text-sm font-semibold text-yellow-700"><i class="fas fa-sticky-note mr-1"></i>管理者メモ</p>
+                                    <p class="text-sm text-yellow-600">\${r.notes}</p>
+                                </div>
+                            \` : ''}
+                            <div class="mt-3 text-xs text-gray-500">
+                                <p>予約ID: \${r.id} | 登録日時: \${new Date(r.created_at).toLocaleString('ja-JP')}</p>
                             </div>
                             <div class="mt-3 flex space-x-2">
                                 <button onclick="updateStatus(\${r.id}, 'confirmed')" 
@@ -466,6 +528,96 @@ export const adminHTML = `
                 loadCalendar();
             } catch (error) {
                 alert('エラーが発生しました');
+            }
+        }
+
+        // 一括選択モードの切り替え
+        function toggleBulkSelectMode() {
+            bulkSelectMode = true;
+            selectedDates.clear();
+            
+            document.getElementById('bulk-select-btn').classList.add('hidden');
+            document.getElementById('bulk-close-btn').classList.remove('hidden');
+            document.getElementById('bulk-open-btn').classList.remove('hidden');
+            document.getElementById('bulk-cancel-btn').classList.remove('hidden');
+            
+            renderCalendar();
+        }
+
+        // 一括選択モードのキャンセル
+        function cancelBulkSelectMode() {
+            bulkSelectMode = false;
+            selectedDates.clear();
+            
+            document.getElementById('bulk-select-btn').classList.remove('hidden');
+            document.getElementById('bulk-close-btn').classList.add('hidden');
+            document.getElementById('bulk-open-btn').classList.add('hidden');
+            document.getElementById('bulk-cancel-btn').classList.add('hidden');
+            
+            renderCalendar();
+        }
+
+        // 日付選択の切り替え
+        function toggleDateSelection(date) {
+            if (!bulkSelectMode) return;
+            
+            if (selectedDates.has(date)) {
+                selectedDates.delete(date);
+            } else {
+                selectedDates.add(date);
+            }
+            
+            renderCalendar();
+        }
+
+        // 選択した日付を一括クローズ
+        async function bulkCloseSelected() {
+            if (selectedDates.size === 0) {
+                alert('日付を選択してください');
+                return;
+            }
+            
+            const reason = prompt(\`\${selectedDates.size}日分を出張不可日に設定します。\\n理由を入力してください（任意）\`, '');
+            if (reason === null) return;
+            
+            try {
+                const promises = Array.from(selectedDates).map(date => 
+                    axios.post('/api/admin/unavailable-dates', { date, reason })
+                );
+                
+                await Promise.all(promises);
+                alert(\`\${selectedDates.size}日分を出張不可日に設定しました\`);
+                
+                cancelBulkSelectMode();
+                loadCalendar();
+            } catch (error) {
+                alert('エラーが発生しました: ' + (error.response?.data?.error || error.message));
+            }
+        }
+
+        // 選択した日付を一括オープン
+        async function bulkOpenSelected() {
+            if (selectedDates.size === 0) {
+                alert('日付を選択してください');
+                return;
+            }
+            
+            if (!confirm(\`\${selectedDates.size}日分を出張可能日に設定しますか？\`)) {
+                return;
+            }
+            
+            try {
+                const promises = Array.from(selectedDates).map(date => 
+                    axios.delete(\`/api/admin/unavailable-dates/\${date}\`)
+                );
+                
+                await Promise.all(promises);
+                alert(\`\${selectedDates.size}日分を出張可能日に設定しました\`);
+                
+                cancelBulkSelectMode();
+                loadCalendar();
+            } catch (error) {
+                alert('エラーが発生しました: ' + (error.response?.data?.error || error.message));
             }
         }
 
