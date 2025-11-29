@@ -291,7 +291,6 @@ ${customer_notes ? `\nご要望・備考:\n${customer_notes}` : ''}
   連絡が繋がらなかった場合、キャンセルとさせていただくことがございます。
 
 ★ ご本人様確認のため、運転免許証などの身分証明書をご用意ください。
-  身分証明書をご提示いただけない場合、買取ができません。
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -635,7 +634,7 @@ app.get('/', (c) => {
                         <ul class="space-y-1 text-blue-700">
                             <li><i class="fas fa-check mr-2"></i>対応エリア：東京都内、横浜市</li>
                             <li><i class="fas fa-phone mr-2"></i><span class="font-bold">ご予約当日、訪問先へ向かう前にお電話させていただきます</span><br><span class="text-sm">連絡が繋がらなかった場合、キャンセルとさせていただくことがございます</span></li>
-                            <li><i class="fas fa-id-card mr-2"></i><span class="font-bold">ご本人様確認のため、運転免許証などの身分証明書をご用意ください</span><br><span class="text-sm">身分証明書をご提示いただけない場合、買取ができません</span></li>
+                            <li><i class="fas fa-id-card mr-2"></i><span class="font-bold">ご本人様確認のため、運転免許証などの身分証明書をご用意ください</span></li>
                             <li><i class="fas fa-check mr-2"></i>予約状況によりご希望に添えない場合がございます</li>
                         </ul>
                     </div>
@@ -992,7 +991,7 @@ app.get('/', (c) => {
                                 </li>
                                 <li class="flex items-start">
                                     <i class="fas fa-id-card mt-1 mr-2"></i>
-                                    <span><span class="font-bold">ご本人様確認のため、運転免許証などの身分証明書をご用意ください。</span><br>身分証明書をご提示いただけない場合、買取ができません。</span>
+                                    <span><span class="font-bold">ご本人様確認のため、運転免許証などの身分証明書をご用意ください。</span></span>
                                 </li>
                             </ul>
                         </div>

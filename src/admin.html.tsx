@@ -392,12 +392,19 @@ export const adminHTML = `
                                 \${timeSlots.map((time, idx) => {
                                     const count = reservationMap[date]?.[time] || 0;
                                     const isBooked = count > 0;
-                                    const slotClass = isPast ? 'slot-unavailable' : 
+                                    
+                                    // 4時間前チェック
+                                    const slotDateTime = new Date(\`\${date}T\${time}:00");
+                                    const fourHoursBefore = new Date(slotDateTime.getTime() - 4 * 60 * 60 * 1000);
+                                    const now = new Date();
+                                    const isTooLate = now >= fourHoursBefore;
+                                    
+                                    const slotClass = isPast || isTooLate ? 'slot-unavailable' : 
                                                      isBooked ? 'slot-booked' : 'slot-available';
                                     return \`
                                         <button class="slot-button \${slotClass}" 
                                             onclick="event.stopPropagation(); showSlotDetails('\${date}', '\${time}')"
-                                            \${isPast ? 'disabled' : ''}>
+                                            \${isPast || isTooLate ? 'disabled' : ''}>
                                             \${slotLabels[idx]}
                                         </button>
                                     \`;
