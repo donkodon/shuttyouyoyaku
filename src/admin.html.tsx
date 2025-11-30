@@ -250,27 +250,43 @@ export const adminHTML = `
 
         // DOMContentLoaded
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOMContentLoaded fired');
+            
             // ログイン処理
-            document.getElementById('login-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                
-                const formData = new FormData(e.target);
-                const data = Object.fromEntries(formData.entries());
-                
-                try {
-                    const response = await axios.post('/api/admin/login', data);
+            const loginForm = document.getElementById('login-form');
+            console.log('Login form:', loginForm);
+            
+            if (loginForm) {
+                loginForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Form submitted');
                     
-                    if (response.data.success) {
-                        isLoggedIn = true;
-                        document.getElementById('login-screen').classList.add('hidden');
-                        document.getElementById('admin-screen').classList.remove('hidden');
-                        document.getElementById('admin-username').textContent = response.data.data.username;
-                        loadCalendar();
+                    const formData = new FormData(e.target);
+                    const data = Object.fromEntries(formData.entries());
+                    console.log('Login data:', data);
+                    
+                    try {
+                        const response = await axios.post('/api/admin/login', data);
+                        console.log('Login response:', response.data);
+                        
+                        if (response.data.success) {
+                            isLoggedIn = true;
+                            document.getElementById('login-screen').classList.add('hidden');
+                            document.getElementById('admin-screen').classList.remove('hidden');
+                            document.getElementById('admin-username').textContent = response.data.data.username;
+                            loadCalendar();
+                        } else {
+                            alert('ログインに失敗しました');
+                        }
+                    } catch (error) {
+                        console.error('Login error:', error);
+                        alert('ログインに失敗しました: ' + (error.response?.data?.error || error.message));
                     }
-                } catch (error) {
-                    alert('ログインに失敗しました: ' + (error.response?.data?.error || error.message));
-                }
-            });
+                });
+            } else {
+                console.error('Login form not found!');
+            }
 
         // ログアウト
         function logout() {
