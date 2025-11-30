@@ -963,16 +963,16 @@ app.get('/', (c) => {
                         </div>
                     </div>
                     
-                    <!-- 日付ヘッダー（横スクロール） -->
-                    <div class="overflow-x-auto border-b">
-                        <div id="date-header" class="flex min-w-max">
+                    <!-- 日付ヘッダー -->
+                    <div class="border-b">
+                        <div id="date-header" class="flex">
                             <!-- 日付ヘッダーがここに表示されます -->
                         </div>
                     </div>
                     
-                    <!-- 時間帯スロット一覧（横スクロール） -->
-                    <div class="overflow-x-auto">
-                        <div id="time-slots-grid" class="min-w-max">
+                    <!-- 時間帯スロット一覧 -->
+                    <div class="overflow-y-auto max-h-96">
+                        <div id="time-slots-grid">
                             <!-- 時間帯スロットがここに表示されます -->
                         </div>
                     </div>
@@ -1310,16 +1310,17 @@ app.get('/', (c) => {
                 const weekDays = ['日', '月', '火', '水', '木', '金', '土'];
                 
                 // 日付ヘッダーを生成
-                let headerHtml = dates.map(date => {
+                let headerHtml = '<div class="flex-shrink-0 w-20 p-2 border-r bg-gray-50"></div>'; // 左上の空白
+                headerHtml += dates.map(date => {
                     const dateStr = date.toISOString().split('T')[0];
                     const isToday = date.getTime() === today.getTime();
                     const isPast = date < today;
                     const isUnavailable = dateStr in unavailableMap;
                     
                     return \`
-                        <div class="w-32 flex-shrink-0 p-3 text-center border-r \${isToday ? 'bg-pink-50' : 'bg-white'}">
+                        <div class="flex-1 p-2 text-center border-r \${isToday ? 'bg-pink-50' : 'bg-white'}">
                             <div class="text-xs text-gray-600">\${weekDays[date.getDay()]}</div>
-                            <div class="text-lg font-bold \${isToday ? 'text-pink-600' : 'text-gray-800'}">
+                            <div class="text-sm font-bold \${isToday ? 'text-pink-600' : 'text-gray-800'}">
                                 \${date.getMonth() + 1}/\${date.getDate()}
                             </div>
                             \${isUnavailable ? '<div class="text-xs text-red-600 mt-1">予約不可</div>' : ''}
@@ -1333,10 +1334,9 @@ app.get('/', (c) => {
                 let slotsHtml = timeSlots.map((time, timeIdx) => {
                     let rowHtml = \`
                         <div class="flex border-b">
-                            <div class="w-24 flex-shrink-0 p-3 bg-gray-50 border-r font-medium text-sm flex items-center justify-center">
+                            <div class="flex-shrink-0 w-20 p-2 bg-gray-50 border-r text-xs font-medium flex items-center justify-center text-center">
                                 \${slotLabels[timeIdx]}
                             </div>
-                            <div class="flex">
                     \`;
                     
                     dates.forEach(date => {
@@ -1356,24 +1356,24 @@ app.get('/', (c) => {
                         const isDisabled = isPast || isUnavailable || isBooked || isTooLate;
                         
                         let cellContent = '';
-                        let cellClass = 'w-32 flex-shrink-0 p-3 border-r flex items-center justify-center';
+                        let cellClass = 'flex-1 p-3 border-r flex items-center justify-center';
                         
                         if (isDisabled) {
                             cellClass += ' bg-gray-100';
                             if (isBooked) {
-                                cellContent = '<span class="text-red-500 font-bold">×</span>';
+                                cellContent = '<span class="text-red-500 font-bold text-xl">×</span>';
                             } else {
                                 cellContent = '<span class="text-gray-400">−</span>';
                             }
                         } else {
                             cellClass += ' bg-white hover:bg-green-50 cursor-pointer';
-                            cellContent = '<button class="text-green-600 font-bold text-2xl" onclick="selectTimeSlot(\\'' + dateStr + '\\', \\'' + time + '\\')">○</button>';
+                            cellContent = '<button class="text-green-600 font-bold text-2xl w-full h-full" onclick="selectTimeSlot(\\'' + dateStr + '\\', \\'' + time + '\\')">○</button>';
                         }
                         
                         rowHtml += \`<div class="\${cellClass}">\${cellContent}</div>\`;
                     });
                     
-                    rowHtml += '</div></div>';
+                    rowHtml += '</div>';
                     return rowHtml;
                 }).join('');
                 
