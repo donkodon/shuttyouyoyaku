@@ -934,8 +934,8 @@ app.get('/', (c) => {
             </div>
 
             <!-- カレンダーセクション -->
-            <div id="calendar-section" class="section hidden">
-                <div class="bg-white rounded-lg shadow-md">
+            <div id="calendar-section" class="section hidden overflow-x-hidden">
+                <div class="bg-white rounded-lg shadow-md overflow-x-hidden">
                     <!-- ヘッダー -->
                     <div class="p-4 border-b">
                         <div class="flex justify-between items-center mb-2">
@@ -953,27 +953,30 @@ app.get('/', (c) => {
                     <!-- 月移動ボタン -->
                     <div class="p-4 border-b bg-gray-50">
                         <div class="flex justify-between items-center">
-                            <button onclick="changeWeek(-1)" class="px-4 py-2 bg-white border rounded hover:bg-gray-100">
-                                <i class="fas fa-chevron-left"></i> 前の週
+                            <button onclick="changeWeek(-1)" class="px-3 py-2 text-sm bg-white border rounded hover:bg-gray-100">
+                                <i class="fas fa-chevron-left"></i> 前
                             </button>
-                            <span id="current-week-label" class="text-lg font-semibold"></span>
-                            <button onclick="changeWeek(1)" class="px-4 py-2 bg-white border rounded hover:bg-gray-100">
-                                次の週 <i class="fas fa-chevron-right"></i>
+                            <span id="current-week-label" class="text-sm font-semibold"></span>
+                            <button onclick="changeWeek(1)" class="px-3 py-2 text-sm bg-white border rounded hover:bg-gray-100">
+                                次 <i class="fas fa-chevron-right"></i>
                             </button>
                         </div>
                     </div>
                     
-                    <!-- 日付ヘッダー -->
-                    <div class="border-b">
-                        <div id="date-header" class="flex">
-                            <!-- 日付ヘッダーがここに表示されます -->
+                    <!-- カレンダーテーブル -->
+                    <div class="overflow-x-hidden">
+                        <!-- 日付ヘッダー -->
+                        <div class="border-b overflow-x-hidden">
+                            <div id="date-header" class="flex w-full">
+                                <!-- 日付ヘッダーがここに表示されます -->
+                            </div>
                         </div>
-                    </div>
-                    
-                    <!-- 時間帯スロット一覧 -->
-                    <div class="overflow-y-auto max-h-96">
-                        <div id="time-slots-grid">
-                            <!-- 時間帯スロットがここに表示されます -->
+                        
+                        <!-- 時間帯スロット一覧 -->
+                        <div class="overflow-y-auto overflow-x-hidden max-h-96">
+                            <div id="time-slots-grid" class="w-full">
+                                <!-- 時間帯スロットがここに表示されます -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1310,7 +1313,7 @@ app.get('/', (c) => {
                 const weekDays = ['日', '月', '火', '水', '木', '金', '土'];
                 
                 // 日付ヘッダーを生成
-                let headerHtml = '<div class="flex-shrink-0 w-20 p-2 border-r bg-gray-50"></div>'; // 左上の空白
+                let headerHtml = '<div style="width: 15%; min-width: 50px;" class="flex-shrink-0 p-1 border-r bg-gray-50"></div>'; // 左上の空白
                 headerHtml += dates.map(date => {
                     const dateStr = date.toISOString().split('T')[0];
                     const isToday = date.getTime() === today.getTime();
@@ -1318,12 +1321,12 @@ app.get('/', (c) => {
                     const isUnavailable = dateStr in unavailableMap;
                     
                     return \`
-                        <div class="flex-1 p-2 text-center border-r \${isToday ? 'bg-pink-50' : 'bg-white'}">
+                        <div style="width: 12.14%;" class="flex-shrink-0 p-1 text-center border-r \${isToday ? 'bg-pink-50' : 'bg-white'}">
                             <div class="text-xs text-gray-600">\${weekDays[date.getDay()]}</div>
-                            <div class="text-sm font-bold \${isToday ? 'text-pink-600' : 'text-gray-800'}">
+                            <div class="text-xs font-bold \${isToday ? 'text-pink-600' : 'text-gray-800'}">
                                 \${date.getMonth() + 1}/\${date.getDate()}
                             </div>
-                            \${isUnavailable ? '<div class="text-xs text-red-600 mt-1">予約不可</div>' : ''}
+                            \${isUnavailable ? '<div class="text-xs text-red-600">×</div>' : ''}
                         </div>
                     \`;
                 }).join('');
@@ -1334,7 +1337,7 @@ app.get('/', (c) => {
                 let slotsHtml = timeSlots.map((time, timeIdx) => {
                     let rowHtml = \`
                         <div class="flex border-b">
-                            <div class="flex-shrink-0 w-20 p-2 bg-gray-50 border-r text-xs font-medium flex items-center justify-center text-center">
+                            <div style="width: 15%; min-width: 50px;" class="flex-shrink-0 p-1 bg-gray-50 border-r text-xs font-medium flex items-center justify-center text-center">
                                 \${slotLabels[timeIdx]}
                             </div>
                     \`;
@@ -1356,21 +1359,21 @@ app.get('/', (c) => {
                         const isDisabled = isPast || isUnavailable || isBooked || isTooLate;
                         
                         let cellContent = '';
-                        let cellClass = 'flex-1 p-3 border-r flex items-center justify-center';
+                        let cellClass = 'flex-shrink-0 p-2 border-r flex items-center justify-center';
                         
                         if (isDisabled) {
                             cellClass += ' bg-gray-100';
                             if (isBooked) {
-                                cellContent = '<span class="text-red-500 font-bold text-xl">×</span>';
+                                cellContent = '<span class="text-red-500 font-bold text-lg">×</span>';
                             } else {
                                 cellContent = '<span class="text-gray-400">−</span>';
                             }
                         } else {
                             cellClass += ' bg-white hover:bg-green-50 cursor-pointer';
-                            cellContent = '<button class="text-green-600 font-bold text-2xl w-full h-full" onclick="selectTimeSlot(\\'' + dateStr + '\\', \\'' + time + '\\')">○</button>';
+                            cellContent = '<button class="text-green-600 font-bold text-xl w-full h-full" onclick="selectTimeSlot(\\'' + dateStr + '\\', \\'' + time + '\\')">○</button>';
                         }
                         
-                        rowHtml += \`<div class="\${cellClass}">\${cellContent}</div>\`;
+                        rowHtml += \`<div style="width: 12.14%;" class="\${cellClass}">\${cellContent}</div>\`;
                     });
                     
                     rowHtml += '</div>';
