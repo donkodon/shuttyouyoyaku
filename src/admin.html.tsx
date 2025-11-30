@@ -252,25 +252,25 @@ export const adminHTML = `
         document.addEventListener('DOMContentLoaded', () => {
             // ログイン処理
             document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
-            
-            try {
-                const response = await axios.post('/api/admin/login', data);
+                e.preventDefault();
                 
-                if (response.data.success) {
-                    isLoggedIn = true;
-                    document.getElementById('login-screen').classList.add('hidden');
-                    document.getElementById('admin-screen').classList.remove('hidden');
-                    document.getElementById('admin-username').textContent = response.data.data.username;
-                    loadCalendar();
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+                
+                try {
+                    const response = await axios.post('/api/admin/login', data);
+                    
+                    if (response.data.success) {
+                        isLoggedIn = true;
+                        document.getElementById('login-screen').classList.add('hidden');
+                        document.getElementById('admin-screen').classList.remove('hidden');
+                        document.getElementById('admin-username').textContent = response.data.data.username;
+                        loadCalendar();
+                    }
+                } catch (error) {
+                    alert('ログインに失敗しました: ' + (error.response?.data?.error || error.message));
                 }
-            } catch (error) {
-                alert('ログインに失敗しました: ' + (error.response?.data?.error || error.message));
-            }
-        });
+            });
 
         // ログアウト
         function logout() {
