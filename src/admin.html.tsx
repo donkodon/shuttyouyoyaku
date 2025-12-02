@@ -286,6 +286,10 @@ export const adminHTML = `
                     }
                 });
             }
+            
+            // ステータスフィルター
+            document.getElementById('status-filter')?.addEventListener('change', loadReservations);
+        }); // DOMContentLoaded終了
 
         // ログアウト
         function logout() {
@@ -786,10 +790,6 @@ export const adminHTML = `
             };
             return labels[status] || status;
         }
-
-            // ステータスフィルター
-            document.getElementById('status-filter')?.addEventListener('change', loadReservations);
-        }); // DOMContentLoaded終了
     </script>
 </body>
 </html>
