@@ -4,6 +4,9 @@ export const adminHTML = `
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>管理者画面 - 出張買取予約システム</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
@@ -260,11 +263,13 @@ export const adminHTML = `
                 loginForm.addEventListener('submit', async function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('Form submitted');
+                    
+                    alert('ログイン処理を開始します');
                     
                     const formData = new FormData(e.target);
                     const data = Object.fromEntries(formData.entries());
-                    console.log('Login data:', data);
+                    
+                    alert('ユーザー名: ' + data.username);
                     
                     try {
                         const response = await axios.post('/api/admin/login', data, {
@@ -272,24 +277,26 @@ export const adminHTML = `
                                 'Content-Type': 'application/json'
                             }
                         });
-                        console.log('Login response:', response.data);
+                        
+                        alert('API応答受信: ' + JSON.stringify(response.data));
                         
                         if (response.data.success) {
+                            alert('ログイン成功！画面を切り替えます');
                             isLoggedIn = true;
                             document.getElementById('login-screen').classList.add('hidden');
                             document.getElementById('admin-screen').classList.remove('hidden');
                             document.getElementById('admin-username').textContent = response.data.data.username;
                             loadCalendar();
                         } else {
-                            alert('ログインに失敗しました');
+                            alert('ログインに失敗しました: ' + response.data.error);
                         }
                     } catch (error) {
                         console.error('Login error:', error);
-                        alert('ログインに失敗しました: ' + (error.response?.data?.error || error.message));
+                        alert('エラー発生: ' + (error.response?.data?.error || error.message));
                     }
                 });
             } else {
-                console.error('Login form not found!');
+                alert('ログインフォームが見つかりません！');
             }
 
         // ログアウト
