@@ -249,27 +249,20 @@ export const adminHTML = `
 
         // 時間帯の定義
         const timeSlots = ['10:00', '12:00', '14:00', '16:00'];
-        const slotLabels = ['午前1', '午前2', '午後1', '午後2'];
+        const slotLabels = ['10-12', '12-14', '14-16', '16-18'];
 
         // DOMContentLoaded
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('DOMContentLoaded fired');
-            
             // ログイン処理
             const loginForm = document.getElementById('login-form');
-            console.log('Login form:', loginForm);
             
             if (loginForm) {
                 loginForm.addEventListener('submit', async function(e) {
                     e.preventDefault();
                     e.stopPropagation();
                     
-                    alert('ログイン処理を開始します');
-                    
                     const formData = new FormData(e.target);
                     const data = Object.fromEntries(formData.entries());
-                    
-                    alert('ユーザー名: ' + data.username);
                     
                     try {
                         const response = await axios.post('/api/admin/login', data, {
@@ -278,25 +271,20 @@ export const adminHTML = `
                             }
                         });
                         
-                        alert('API応答受信: ' + JSON.stringify(response.data));
-                        
                         if (response.data.success) {
-                            alert('ログイン成功！画面を切り替えます');
                             isLoggedIn = true;
                             document.getElementById('login-screen').classList.add('hidden');
                             document.getElementById('admin-screen').classList.remove('hidden');
                             document.getElementById('admin-username').textContent = response.data.data.username;
                             loadCalendar();
                         } else {
-                            alert('ログインに失敗しました: ' + response.data.error);
+                            alert('ログインに失敗しました');
                         }
                     } catch (error) {
                         console.error('Login error:', error);
-                        alert('エラー発生: ' + (error.response?.data?.error || error.message));
+                        alert('ログインに失敗しました');
                     }
                 });
-            } else {
-                alert('ログインフォームが見つかりません！');
             }
 
         // ログアウト
@@ -467,12 +455,12 @@ export const adminHTML = `
             try {
                 if (isCurrentlyUnavailable) {
                     await axios.delete(\`/api/admin/unavailable-dates/\${date}\`);
-                    alert('出張可能日に設定しました');
+                    // 出張可能日に設定しました
                 } else {
                     const reason = prompt('出張不可の理由を入力してください（任意）', '');
                     if (reason !== null) {
                         await axios.post('/api/admin/unavailable-dates', { date, reason });
-                        alert('出張不可日に設定しました');
+                        // 出張不可日に設定しました
                     } else {
                         return;
                     }
