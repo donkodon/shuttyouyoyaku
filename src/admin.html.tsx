@@ -267,7 +267,11 @@ export const adminHTML = `
                     console.log('Login data:', data);
                     
                     try {
-                        const response = await axios.post('/api/admin/login', data);
+                        const response = await axios.post('/api/admin/login', data, {
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
                         console.log('Login response:', response.data);
                         
                         if (response.data.success) {
