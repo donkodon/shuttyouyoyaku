@@ -1379,7 +1379,7 @@ app.get('/', (c) => {
                             }
                         } else {
                             cellClass += ' bg-white hover:bg-green-50 cursor-pointer';
-                            cellContent = '<button class="text-green-600 font-bold text-xl w-full h-full" onclick="selectTimeSlot(\\'' + dateStr + '\\', \\'' + time + '\\')">○</button>';
+                            cellContent = '<button class="text-green-600 font-bold text-xl w-full h-full" onclick="selectTimeSlot(&#39;' + dateStr + '&#39;, &#39;' + time + '&#39;)">○</button>';
                         }
                         
                         rowHtml += \`<div style="width: 12.14%;" class="\${cellClass}">\${cellContent}</div>\`;
