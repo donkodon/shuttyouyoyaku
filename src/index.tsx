@@ -1324,7 +1324,10 @@ app.get('/', (c) => {
                 // 日付ヘッダーを生成
                 let headerHtml = '<div style="width: 15%; min-width: 50px;" class="flex-shrink-0 p-1 border-r bg-gray-50"></div>'; // 左上の空白
                 headerHtml += dates.map(date => {
-                    const dateStr = date.toISOString().split('T')[0];
+                    // ローカルタイムゾーンで日付文字列を生成
+                    const dateStr = date.getFullYear() + '-' + 
+                                    String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                                    String(date.getDate()).padStart(2, '0');
                     const isToday = date.getTime() === today.getTime();
                     const isPast = date < today;
                     const isUnavailable = dateStr in unavailableMap;
@@ -1352,7 +1355,10 @@ app.get('/', (c) => {
                     \`;
                     
                     dates.forEach(date => {
-                        const dateStr = date.toISOString().split('T')[0];
+                        // ローカルタイムゾーンで日付文字列を生成
+                        const dateStr = date.getFullYear() + '-' + 
+                                        String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                                        String(date.getDate()).padStart(2, '0');
                         const isPast = date < today;
                         const isUnavailable = dateStr in unavailableMap;
                         const count = reservationMap[dateStr]?.[time] || 0;
