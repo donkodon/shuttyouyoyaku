@@ -423,7 +423,7 @@ export const adminHTML = `
                                     const isBooked = count > 0;
                                     
                                     // 4時間前チェック
-                                    const slotDateTime = new Date(\`\${date}T\${time}:00");
+                                    const slotDateTime = new Date(\`\${date}T\${time}:00\`);
                                     const fourHoursBefore = new Date(slotDateTime.getTime() - 4 * 60 * 60 * 1000);
                                     const now = new Date();
                                     const isTooLate = now >= fourHoursBefore;
@@ -432,7 +432,7 @@ export const adminHTML = `
                                                      isBooked ? 'slot-booked' : 'slot-available';
                                     return \`
                                         <button class="slot-button \${slotClass}" 
-                                            onclick="event.stopPropagation(); showSlotDetails('\${date}', '\${time}')"
+                                            onclick="event.stopPropagation(); showSlotDetails(\\'\${date}\\', \\'\${time}\\')"
                                             \${isPast || isTooLate ? 'disabled' : ''}>
                                             \${slotLabels[idx]}
                                         </button>
