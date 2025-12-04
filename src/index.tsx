@@ -307,33 +307,80 @@ ${customer_notes ? `\nご要望・備考:\n${customer_notes}` : ''}
     try {
       const webhookUrl = 'https://jinkedon.app.n8n.cloud/webhook/f6c8a951-48b3-44bd-b455-ca4567a88ee1';
       const emailData = {
-        to: customer_email,
+        to: customer_email || '',
         subject: `【出張買取予約システム】ご予約を承りました（予約ID: #${reservationId}）`,
-        reservationId: reservationId,
-        customerName: customer_name,
-        customerPhone: customer_phone,
-        customerEmail: customer_email,
-        customerPostalCode: customer_postal_code,
-        customerAddress: customer_address,
-        reservationDate: reservation_date,
-        reservationTime: reservation_time,
-        reservationTimeLabel: timeSlotLabels[reservation_time] || reservation_time,
-        itemCategory: item_category,
-        itemDescription: item_description,
-        estimatedQuantity: estimated_quantity,
-        hasParking: has_parking,
-        hasElevator: has_elevator,
-        customerNotes: customer_notes
+        reservationId: String(reservationId),
+        customerName: customer_name || '',
+        customerPhone: customer_phone || '',
+        customerEmail: customer_email || '',
+        customerPostalCode: customer_postal_code || '',
+        customerAddress: customer_address || '',
+        reservationDate: reservation_date || '',
+        reservationTime: reservation_time || '',
+        reservationTimeLabel: timeSlotLabels[reservation_time] || reservation_time || '',
+        itemCategory: item_category || '',
+        itemDescription: item_description || '',
+        estimatedQuantity: estimated_quantity || '',
+        hasParking: has_parking || '',
+        hasElevator: has_elevator || '',
+        customerNotes: customer_notes || '',
+        // メール本文全体
+        emailBody: `${customer_name} 様
+
+この度は、出張買取予約システムをご利用いただき、誠にありがとうございます。
+以下の内容でご予約を承りました。
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+■ ご予約内容
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+予約ID: #${reservationId}
+予約日時: ${reservation_date} ${timeSlotLabels[reservation_time] || reservation_time}
+
+■ お客様情報
+お名前: ${customer_name}
+電話番号: ${customer_phone}
+メールアドレス: ${customer_email}
+${customer_postal_code ? `郵便番号: 〒${customer_postal_code}\n` : ''}訪問先住所: ${customer_address}
+
+■ 買取情報
+買取品目: ${item_category}
+品目の詳細: ${item_description}
+概算点数: ${estimated_quantity}
+駐車場: ${has_parking}
+エレベーター: ${has_elevator}
+${customer_notes ? `\nご要望・備考:\n${customer_notes}` : ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+【重要なご確認事項】
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+★ ご予約当日、訪問先へ向かう前にお電話させていただきます。
+  連絡が繋がらなかった場合、キャンセルとさせていただくことがございます。
+
+★ ご本人様確認のため、運転免許証などの身分証明書をご用意ください。
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+担当者より改めてご連絡させていただきます。
+ご不明な点がございましたら、お気軽にお問い合わせください。
+
+今後ともよろしくお願いいたします。
+
+出張買取予約システム`
       };
       
-      await fetch(webhookUrl, {
+      console.log('=== n8n Webhook送信データ ===');
+      console.log(JSON.stringify(emailData, null, 2));
+      
+      const webhookResponse = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(emailData)
       });
-      console.log('n8n Webhook呼び出し成功');
+      
+      console.log('n8n Webhook呼び出し成功:', webhookResponse.status);
     } catch (webhookError) {
       console.error('n8n Webhook呼び出しエラー:', webhookError);
       // Webhookエラーは予約処理に影響させない
