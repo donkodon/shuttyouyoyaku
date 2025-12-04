@@ -303,6 +303,42 @@ ${customer_notes ? `\nご要望・備考:\n${customer_notes}` : ''}
     `);
     console.log('========================');
     
+    // n8n Webhookにメール送信リクエスト
+    try {
+      const webhookUrl = 'https://jinkedon.app.n8n.cloud/webhook/e689329e-f0a3-4265-b103-93151caf93b1';
+      const emailData = {
+        to: customer_email,
+        subject: `【出張買取予約システム】ご予約を承りました（予約ID: #${reservationId}）`,
+        reservationId: reservationId,
+        customerName: customer_name,
+        customerPhone: customer_phone,
+        customerEmail: customer_email,
+        customerPostalCode: customer_postal_code,
+        customerAddress: customer_address,
+        reservationDate: reservation_date,
+        reservationTime: reservation_time,
+        reservationTimeLabel: timeSlotLabels[reservation_time] || reservation_time,
+        itemCategory: item_category,
+        itemDescription: item_description,
+        estimatedQuantity: estimated_quantity,
+        hasParking: has_parking,
+        hasElevator: has_elevator,
+        customerNotes: customer_notes
+      };
+      
+      await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(emailData)
+      });
+      console.log('n8n Webhook呼び出し成功');
+    } catch (webhookError) {
+      console.error('n8n Webhook呼び出しエラー:', webhookError);
+      // Webhookエラーは予約処理に影響させない
+    }
+    
     return c.json({
       success: true,
       data: {
