@@ -305,7 +305,7 @@ ${customer_notes ? `\nご要望・備考:\n${customer_notes}` : ''}
     
     // n8n Webhookにメール送信リクエスト
     try {
-      const webhookUrl = 'https://jinkedon.app.n8n.cloud/webhook/e689329e-f0a3-4265-b103-93151caf93b1';
+      const webhookUrl = 'https://jinkedon.app.n8n.cloud/webhook/f6c8a951-48b3-44bd-b455-ca4567a88ee1';
       const emailData = {
         to: customer_email,
         subject: `【出張買取予約システム】ご予約を承りました（予約ID: #${reservationId}）`,
