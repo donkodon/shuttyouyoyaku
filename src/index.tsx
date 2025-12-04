@@ -255,64 +255,20 @@ app.post('/api/reservations', async (c) => {
     
     console.log('=== 予約確認メール送信 ===');
     console.log(`宛先: ${customer_email}`);
-    console.log(`件名: 【出張買取予約システム】ご予約を承りました（予約ID: #${reservationId}）`);
-    console.log(`本文:`);
-    console.log(`
-${customer_name} 様
-
-この度は、出張買取予約システムをご利用いただき、誠にありがとうございます。
-以下の内容でご予約を承りました。
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-■ ご予約内容
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-予約ID: #${reservationId}
-予約日時: ${reservation_date} ${timeSlotLabels[reservation_time] || reservation_time}
-
-■ お客様情報
-お名前: ${customer_name}
-電話番号: ${customer_phone}
-メールアドレス: ${customer_email}
-${customer_postal_code ? `郵便番号: 〒${customer_postal_code}\n` : ''}訪問先住所: ${customer_address}
-
-■ 買取情報
-買取品目: ${item_category}
-品目の詳細: ${item_description}
-概算点数: ${estimated_quantity}
-駐車場: ${has_parking}
-エレベーター: ${has_elevator}
-${customer_notes ? `\nご要望・備考:\n${customer_notes}` : ''}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-【重要なご確認事項】
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-★ ご予約当日、訪問先へ向かう前にお電話させていただきます。
-  連絡が繋がらなかった場合、キャンセルとさせていただくことがございます。
-
-★ ご本人様確認のため、運転免許証などの身分証明書をご用意ください。
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-担当者より改めてご連絡させていただきます。
-ご不明な点がございましたら、お気軽にお問い合わせください。
-
-今後ともよろしくお願いいたします。
-
-出張買取予約システム
-    `);
+    console.log(`件名: 【出張買取予約システム】ご予約を承りました`);
+    console.log(`予約ID: #${reservationId}`);
+    console.log(`予約日時: ${reservation_date} ${timeSlotLabels[reservation_time] || reservation_time}`);
     console.log('========================');
     
     // n8n Webhookにメール送信リクエスト
     try {
       const webhookUrl = 'https://jinkedon.app.n8n.cloud/webhook/f6c8a951-48b3-44bd-b455-ca4567a88ee1';
       const emailData = {
-        to: customer_email || '',
-        subject: `【出張買取予約システム】ご予約を承りました（予約ID: #${reservationId}）`,
+        customerEmail: customer_email || '',
+        subject: `【出張買取予約システム】ご予約を承りました`,
         reservationId: String(reservationId),
         customerName: customer_name || '',
         customerPhone: customer_phone || '',
-        customerEmail: customer_email || '',
         customerPostalCode: customer_postal_code || '',
         customerAddress: customer_address || '',
         reservationDate: reservation_date || '',
@@ -324,49 +280,84 @@ ${customer_notes ? `\nご要望・備考:\n${customer_notes}` : ''}
         hasParking: has_parking || '',
         hasElevator: has_elevator || '',
         customerNotes: customer_notes || '',
-        // メール本文全体
-        emailBody: `${customer_name} 様
-
-この度は、出張買取予約システムをご利用いただき、誠にありがとうございます。
-以下の内容でご予約を承りました。
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-■ ご予約内容
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-予約ID: #${reservationId}
-予約日時: ${reservation_date} ${timeSlotLabels[reservation_time] || reservation_time}
-
-■ お客様情報
-お名前: ${customer_name}
-電話番号: ${customer_phone}
-メールアドレス: ${customer_email}
-${customer_postal_code ? `郵便番号: 〒${customer_postal_code}\n` : ''}訪問先住所: ${customer_address}
-
-■ 買取情報
-買取品目: ${item_category}
-品目の詳細: ${item_description}
-概算点数: ${estimated_quantity}
-駐車場: ${has_parking}
-エレベーター: ${has_elevator}
-${customer_notes ? `\nご要望・備考:\n${customer_notes}` : ''}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-【重要なご確認事項】
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-★ ご予約当日、訪問先へ向かう前にお電話させていただきます。
-  連絡が繋がらなかった場合、キャンセルとさせていただくことがございます。
-
-★ ご本人様確認のため、運転免許証などの身分証明書をご用意ください。
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-担当者より改めてご連絡させていただきます。
-ご不明な点がございましたら、お気軽にお問い合わせください。
-
-今後ともよろしくお願いいたします。
-
-出張買取予約システム`
+        // メール本文HTML
+        emailBody: `<div style="font-family: Arial, 'Hiragino Sans', 'Yu Gothic', sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.8; color: #333;">
+  
+  <p style="margin-bottom: 20px;">${customer_name} 様</p>
+  
+  <p style="margin-bottom: 20px;">この度は、出張買取予約システムをご利用いただき、誠にありがとうございます。<br>以下の内容でご予約を承りました。</p>
+  
+  <table style="width: 100%; border-collapse: collapse; margin: 30px 0; border: 1px solid #ddd;">
+    <tr style="background-color: #f8f9fa;">
+      <th colspan="2" style="padding: 15px; text-align: left; border-bottom: 2px solid #dee2e6; font-size: 16px; font-weight: bold;">■ ご予約内容</th>
+    </tr>
+    <tr style="border-bottom: 1px solid #ddd;">
+      <td style="padding: 12px 15px; width: 35%; background-color: #f8f9fa; font-weight: bold;">予約ID</td>
+      <td style="padding: 12px 15px;">#${reservationId}</td>
+    </tr>
+    <tr style="border-bottom: 1px solid #ddd;">
+      <td style="padding: 12px 15px; background-color: #f8f9fa; font-weight: bold;">予約日時</td>
+      <td style="padding: 12px 15px;">${reservation_date} ${timeSlotLabels[reservation_time] || reservation_time}</td>
+    </tr>
+  </table>
+  
+  <table style="width: 100%; border-collapse: collapse; margin: 30px 0; border: 1px solid #ddd;">
+    <tr style="background-color: #f8f9fa;">
+      <th colspan="2" style="padding: 15px; text-align: left; border-bottom: 2px solid #dee2e6; font-size: 16px; font-weight: bold;">■ お客様情報</th>
+    </tr>
+    <tr style="border-bottom: 1px solid #ddd;">
+      <td style="padding: 12px 15px; width: 35%; background-color: #f8f9fa; font-weight: bold;">お名前</td>
+      <td style="padding: 12px 15px;">${customer_name}</td>
+    </tr>
+    <tr style="border-bottom: 1px solid #ddd;">
+      <td style="padding: 12px 15px; background-color: #f8f9fa; font-weight: bold;">電話番号</td>
+      <td style="padding: 12px 15px;">${customer_phone}</td>
+    </tr>
+    ${customer_postal_code ? `<tr style="border-bottom: 1px solid #ddd;"><td style="padding: 12px 15px; background-color: #f8f9fa; font-weight: bold;">郵便番号</td><td style="padding: 12px 15px;">〒${customer_postal_code}</td></tr>` : ''}
+    <tr style="border-bottom: 1px solid #ddd;">
+      <td style="padding: 12px 15px; background-color: #f8f9fa; font-weight: bold;">訪問先住所</td>
+      <td style="padding: 12px 15px;">${customer_address}</td>
+    </tr>
+  </table>
+  
+  <table style="width: 100%; border-collapse: collapse; margin: 30px 0; border: 1px solid #ddd;">
+    <tr style="background-color: #f8f9fa;">
+      <th colspan="2" style="padding: 15px; text-align: left; border-bottom: 2px solid #dee2e6; font-size: 16px; font-weight: bold;">■ 買取情報</th>
+    </tr>
+    <tr style="border-bottom: 1px solid #ddd;">
+      <td style="padding: 12px 15px; width: 35%; background-color: #f8f9fa; font-weight: bold;">買取品目</td>
+      <td style="padding: 12px 15px;">${item_category}</td>
+    </tr>
+    <tr style="border-bottom: 1px solid #ddd;">
+      <td style="padding: 12px 15px; background-color: #f8f9fa; font-weight: bold;">品目の詳細</td>
+      <td style="padding: 12px 15px;">${item_description}</td>
+    </tr>
+    <tr style="border-bottom: 1px solid #ddd;">
+      <td style="padding: 12px 15px; background-color: #f8f9fa; font-weight: bold;">概算点数</td>
+      <td style="padding: 12px 15px;">${estimated_quantity}</td>
+    </tr>
+    <tr style="border-bottom: 1px solid #ddd;">
+      <td style="padding: 12px 15px; background-color: #f8f9fa; font-weight: bold;">駐車場</td>
+      <td style="padding: 12px 15px;">${has_parking}</td>
+    </tr>
+    <tr style="border-bottom: 1px solid #ddd;">
+      <td style="padding: 12px 15px; background-color: #f8f9fa; font-weight: bold;">エレベーター</td>
+      <td style="padding: 12px 15px;">${has_elevator}</td>
+    </tr>
+    ${customer_notes ? `<tr><td style="padding: 12px 15px; background-color: #f8f9fa; font-weight: bold; vertical-align: top;">ご要望・備考</td><td style="padding: 12px 15px;">${customer_notes}</td></tr>` : ''}
+  </table>
+  
+  <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 30px 0;">
+    <p style="margin: 0 0 15px 0; font-size: 16px; font-weight: bold; color: #856404;">【重要なご確認事項】</p>
+    <p style="margin: 0 0 12px 0; line-height: 1.8;">★ ご予約当日、訪問先へ向かう前にお電話させていただきます。<br><span style="margin-left: 20px;">連絡が繋がらなかった場合、キャンセルとさせていただくことがございます。</span></p>
+    <p style="margin: 0; line-height: 1.8;">★ ご本人様確認のため、運転免許証などの身分証明書をご用意ください。</p>
+  </div>
+  
+  <p style="margin: 30px 0 10px 0; line-height: 1.8;">担当者より改めてご連絡させていただきます。</p>
+  <p style="margin: 0 0 10px 0; line-height: 1.8;">ご不明な点がございましたら、お気軽にお問い合わせください。</p>
+  <p style="margin: 0; line-height: 1.8;">今後ともよろしくお願いいたします。</p>
+  
+</div>`
       };
       
       console.log('=== n8n Webhook送信データ ===');
